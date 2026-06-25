@@ -1,0 +1,28 @@
+﻿# Dependencias
+node_modules/
+
+# Variables de entorno (secretos)
+.env
+.env.local
+
+# Build de producción
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Certificados digitales (NUNCA subir a GitHub)
+backend/certs/
+
+# Archivos XML de depuración
+backend/src/utils/*.xml
