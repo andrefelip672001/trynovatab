@@ -704,9 +704,10 @@ export default function Administracion() {
                       <div className="flex items-center gap-3">
                         <span className="text-gray-500 text-sm">
                           ${parseFloat(producto.precio).toFixed(2)}
-                          {producto.tiene_iva === false && (
-                            <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 ml-2">IVA 0%</span>
-                          )}
+                          {producto.tiene_iva === false
+                            ? <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 ml-2">Sin IVA</span>
+                            : <span className="text-xs px-1.5 py-0.5 rounded bg-blue-50 text-blue-400 ml-2">IVA incl.</span>
+                          }
                         </span>
                         <button
                           onClick={() => handleToggleActivo(producto)}
@@ -993,9 +994,10 @@ export default function Administracion() {
                                 <div className="text-right">
                                   <p className="text-sm text-gray-700">
                                     ${parseFloat(p.precio).toFixed(2)}
-                                    {p.tiene_iva === false && (
-                                      <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 ml-2">IVA 0%</span>
-                                    )}
+                                    {p.tiene_iva === false
+                                      ? <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 ml-2">Sin IVA</span>
+                                      : <span className="text-xs px-1.5 py-0.5 rounded bg-blue-50 text-blue-400 ml-2">IVA incl.</span>
+                                    }
                                   </p>
                                   <p className={`text-xs font-medium ${stockBajo ? 'text-amber-600' : 'text-gray-400'}`}>
                                     Stock: {parseFloat(p.stock_directo).toFixed(0)}
