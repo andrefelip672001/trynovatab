@@ -448,6 +448,8 @@ export const getTicket = async (req, res) => {
     const { id }    = req.params;
     const tenant_id = req.usuario.tenant_id;
 
+    console.log('getTicket llamado con id:', req.params.id, 'tenant:', req.usuario?.tenant_id);
+
     const invResult = await pool.query(
       `SELECT i.*, bs.cedula, bs.nombre_persona
        FROM invoices i
@@ -455,16 +457,19 @@ export const getTicket = async (req, res) => {
        WHERE i.id = $1 AND i.tenant_id = $2`,
       [id, tenant_id]
     );
-    if (invResult.rows.length === 0) {
+    const invoice = invResult.rows[0];
+    console.log('Factura encontrada:', invoice ? 'sí' : 'no', invoice?.id);
+
+    if (!invoice) {
       return res.status(404).json({ status: 'error', mensaje: 'Factura no encontrada' });
     }
-    const invoice = invResult.rows[0];
 
     const tenantResult = await pool.query(
       'SELECT nombre, ruc, direccion FROM tenants WHERE id = $1',
       [tenant_id]
     );
     const tenant = tenantResult.rows[0] || {};
+    console.log('Tenant encontrado:', tenantResult.rows[0] ? 'sí' : 'no');
 
     const itemsResult = await pool.query(
       `SELECT oi.nombre_producto, bsi.cantidad, oi.precio_unitario
@@ -474,6 +479,7 @@ export const getTicket = async (req, res) => {
       [invoice.bill_split_id]
     );
     const items = itemsResult.rows;
+    console.log('Items encontrados:', items?.length);
 
     function fmtDate(iso) {
       if (!iso) return '—';
