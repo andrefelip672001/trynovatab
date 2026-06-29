@@ -36,6 +36,7 @@ export default function Administracion() {
   const [precioProducto, setPrecioProducto]           = useState('');
   const [categoriaProducto, setCategoriaProducto]     = useState('');
   const [tieneIVA, setTieneIVA]                       = useState(true);
+  const [tieneIVADirecto, setTieneIVADirecto]         = useState(true);
   const [guardandoProducto, setGuardandoProducto]     = useState(false);
 
   // Producto (edición)
@@ -317,6 +318,7 @@ export default function Administracion() {
         stock_directo:        Number(stockDirecto) || 0,
         stock_minimo_directo: Number(stockMinimoDirecto) || 0,
         category_id:          categoriaDirecto || null,
+        tiene_iva:            tieneIVADirecto,
       });
       setNombreDirecto('');
       setCodigoBarrasDirecto('');
@@ -324,6 +326,7 @@ export default function Administracion() {
       setStockDirecto('');
       setStockMinimoDirecto('');
       setCategoriaDirecto('');
+      setTieneIVADirecto(true);
       await cargarTodo();
       mostrarExito('Producto directo creado');
     } catch (err) {
@@ -581,15 +584,18 @@ export default function Administracion() {
                       ))}
                     </select>
                   </div>
-                  <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={tieneIVA}
-                      onChange={e => setTieneIVA(e.target.checked)}
-                      className="w-4 h-4 rounded accent-blue-500"
-                    />
-                    Precio incluye IVA 15%
-                  </label>
+                  <div className="flex rounded-lg overflow-hidden border border-gray-200 text-sm">
+                    <button type="button" onClick={() => setTieneIVA(true)}
+                      className="flex-1 py-2 font-medium transition-colors"
+                      style={tieneIVA ? { background: '#4f9cf9', color: '#fff' } : { background: '#f3f4f6', color: '#6b7280' }}>
+                      IVA incluido 15%
+                    </button>
+                    <button type="button" onClick={() => setTieneIVA(false)}
+                      className="flex-1 py-2 font-medium transition-colors border-l border-gray-200"
+                      style={!tieneIVA ? { background: '#4f9cf9', color: '#fff' } : { background: '#f3f4f6', color: '#6b7280' }}>
+                      Exento de IVA
+                    </button>
+                  </div>
                   <button
                     type="submit"
                     disabled={guardandoProducto}
@@ -656,15 +662,18 @@ export default function Administracion() {
                       ))}
                     </select>
                   </div>
-                  <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={editTieneIVA}
-                      onChange={e => setEditTieneIVA(e.target.checked)}
-                      className="w-4 h-4 rounded accent-blue-500"
-                    />
-                    Precio incluye IVA 15%
-                  </label>
+                  <div className="flex rounded-lg overflow-hidden border border-gray-200 text-sm">
+                    <button type="button" onClick={() => setEditTieneIVA(true)}
+                      className="flex-1 py-2 font-medium transition-colors"
+                      style={editTieneIVA ? { background: '#4f9cf9', color: '#fff' } : { background: '#f3f4f6', color: '#6b7280' }}>
+                      IVA incluido 15%
+                    </button>
+                    <button type="button" onClick={() => setEditTieneIVA(false)}
+                      className="flex-1 py-2 font-medium transition-colors border-l border-gray-200"
+                      style={!editTieneIVA ? { background: '#4f9cf9', color: '#fff' } : { background: '#f3f4f6', color: '#6b7280' }}>
+                      Exento de IVA
+                    </button>
+                  </div>
                   <button
                     type="submit"
                     disabled={guardandoEdicion}
@@ -955,6 +964,18 @@ export default function Administracion() {
                     placeholder="Stock mínimo"
                     className={`flex-1 ${inputCls}`}
                   />
+                </div>
+                <div className="flex rounded-lg overflow-hidden border border-gray-200 text-sm">
+                  <button type="button" onClick={() => setTieneIVADirecto(true)}
+                    className="flex-1 py-2 font-medium transition-colors"
+                    style={tieneIVADirecto ? { background: '#4f9cf9', color: '#fff' } : { background: '#f3f4f6', color: '#6b7280' }}>
+                    IVA incluido 15%
+                  </button>
+                  <button type="button" onClick={() => setTieneIVADirecto(false)}
+                    className="flex-1 py-2 font-medium transition-colors border-l border-gray-200"
+                    style={!tieneIVADirecto ? { background: '#4f9cf9', color: '#fff' } : { background: '#f3f4f6', color: '#6b7280' }}>
+                    Exento de IVA
+                  </button>
                 </div>
                 <button
                   type="submit"
