@@ -6,6 +6,7 @@ import Mesas from './pages/Mesas';
 import DetalleOrden from './pages/DetalleOrden';
 import SplitBill from './pages/SplitBill';
 import Administracion from './pages/Administracion';
+import Facturas from './pages/Facturas';
 
 // Protege rutas que requieren estar logueado
 function RutaProtegida({ children }) {
@@ -68,6 +69,14 @@ function AppRoutes() {
         element={
           <RutaProtegida>
             <SplitBill />
+          </RutaProtegida>
+        }
+      />
+      <Route
+        path="/facturas"
+        element={
+          <RutaProtegida>
+            <Facturas />
           </RutaProtegida>
         }
       />

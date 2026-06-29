@@ -139,3 +139,11 @@ export const recipeService = {
 export const statsService = {
   dashboard: () => apiRequest('/stats/dashboard')
 };
+
+export const invoiceService = {
+  listar: () => apiRequest('/invoices'),
+  emitirDirecta: (datos) => apiRequest('/invoices/emitir-directa', {
+    method: 'POST',
+    body: JSON.stringify(datos),
+  }),
+};

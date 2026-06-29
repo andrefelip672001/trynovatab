@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { orderService, productService, tableService } from '../services/api';
+import { orderService, productService, tableService, invoiceService } from '../services/api';
 import Layout from '../components/Layout';
 
 export default function DetalleOrden() {
@@ -20,6 +20,9 @@ export default function DetalleOrden() {
   const [buscando, setBuscando] = useState(false);
   const [carrito, setCarrito] = useState({});
   const [carritoInfo, setCarritoInfo] = useState({});
+  const [modalCerrar, setModalCerrar] = useState(false);
+  const [identificacionComprador, setIdentificacionComprador] = useState('');
+  const [emitiendoFactura, setEmitiendoFactura] = useState(false);
 
   const debounceRef = useRef(null);
   const enviandoRef = useRef(false);
@@ -129,13 +132,29 @@ export default function DetalleOrden() {
     }
   }
 
-  async function handleCerrar() {
+  async function handleCerrarSinFactura() {
     try {
       setError('');
       await orderService.cerrar(orden.id);
       navigate('/mesas');
     } catch (err) {
       setError(err.message || 'Error al cerrar orden');
+      setModalCerrar(false);
+    }
+  }
+
+  async function handleEmitirYCerrar() {
+    try {
+      setEmitiendoFactura(true);
+      setError('');
+      await invoiceService.emitirDirecta({
+        order_id: orden.id,
+        identificacion_comprador: identificacionComprador.trim(),
+      });
+      navigate('/mesas');
+    } catch (err) {
+      setError(err.message || 'Error al emitir factura');
+      setEmitiendoFactura(false);
     }
   }
 
@@ -307,10 +326,66 @@ export default function DetalleOrden() {
               <button type="button" onClick={() => navigate(`/orden/${orden.id}/dividir`)} className="flex-1 border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-medium rounded-lg px-4 py-2.5 text-sm transition">
                 Dividir cuenta
               </button>
-              <button type="button" onClick={handleCerrar} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg px-4 py-2.5 text-sm transition">
+              <button type="button" onClick={() => setModalCerrar(true)} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg px-4 py-2.5 text-sm transition">
                 Cerrar cuenta
               </button>
             </div>
+
+            {/* ── Modal cerrar cuenta ──────────────────────────────────── */}
+            {modalCerrar && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.45)' }}>
+                <div className="bg-white rounded-2xl shadow-xl p-7 w-full max-w-sm mx-4">
+                  <h3 className="text-base font-semibold text-gray-900 mb-1">Cerrar cuenta</h3>
+                  <p className="text-sm text-gray-400 mb-5">¿Deseas emitir una factura antes de cerrar?</p>
+
+                  <div className="mb-5">
+                    <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
+                      Cédula o RUC del cliente (opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={identificacionComprador}
+                      onChange={e => setIdentificacionComprador(e.target.value)}
+                      placeholder="Ej: 1103890487001 · dejar vacío = consumidor final"
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none"
+                      onKeyDown={e => e.key === 'Enter' && handleEmitirYCerrar()}
+                    />
+                  </div>
+
+                  {error && (
+                    <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-4">{error}</p>
+                  )}
+
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={handleEmitirYCerrar}
+                      disabled={emitiendoFactura}
+                      className="w-full text-white font-medium rounded-lg py-2.5 text-sm disabled:opacity-50 transition"
+                      style={{ background: '#4f9cf9' }}
+                    >
+                      {emitiendoFactura ? 'Emitiendo factura...' : 'Emitir factura y cerrar'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCerrarSinFactura}
+                      disabled={emitiendoFactura}
+                      className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg py-2.5 text-sm transition"
+                    >
+                      Cerrar sin factura
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setModalCerrar(false); setError(''); setIdentificacionComprador(''); }}
+                      disabled={emitiendoFactura}
+                      className="w-full text-gray-400 hover:text-gray-600 text-sm py-1.5 transition"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
