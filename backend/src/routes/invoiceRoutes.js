@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { emitirFactura, listarFacturas, emitirFacturaDirecta } from '../controllers/invoiceController.js';
+import { emitirFactura, listarFacturas, emitirFacturaDirecta, getRIDE, getTicket } from '../controllers/invoiceController.js';
 import { verificarToken, verificarRol } from '../middleware/authMiddleware.js';
 
 const router = Router();
@@ -23,6 +23,20 @@ router.post(
   verificarToken,
   verificarRol('admin_local', 'cajero', 'mesero'),
   emitirFacturaDirecta
+);
+
+router.get(
+  '/:id/ride',
+  verificarToken,
+  verificarRol('admin_local', 'cajero'),
+  getRIDE
+);
+
+router.get(
+  '/:id/ticket',
+  verificarToken,
+  verificarRol('admin_local', 'cajero'),
+  getTicket
 );
 
 export default router;

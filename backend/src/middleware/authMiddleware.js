@@ -1,22 +1,25 @@
 import jwt from 'jsonwebtoken';
 
 export const verificarToken = (req, res, next) => {
-  // El token viene en el header: Authorization: Bearer <token>
   const authHeader = req.headers.authorization;
+  const queryToken = req.query.token;
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  let token;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
+  } else if (queryToken) {
+    token = queryToken;
+  } else {
     return res.status(401).json({
       status: 'error',
       mensaje: 'No se proporcionó token de acceso'
     });
   }
 
-  const token = authHeader.split(' ')[1]; // separa "Bearer" del token real
-
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.usuario = decoded; // guardamos los datos del usuario para usarlos en las siguientes funciones
-    next(); // todo bien, deja pasar la petición
+    req.usuario = decoded;
+    next();
   } catch (error) {
     return res.status(401).json({
       status: 'error',

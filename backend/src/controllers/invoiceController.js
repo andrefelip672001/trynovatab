@@ -3,6 +3,7 @@ import { generarFacturaXML }    from '../utils/generarFacturaXML.js';
 import { firmarXML }            from '../utils/firmarXML.js';
 import { enviarAlSRI }          from '../utils/enviarSRI.js';
 import { consultarAutorizacion } from '../utils/consultarAutorizacion.js';
+import { generarRIDE }          from '../utils/generarRIDE.js';
 
 // La BD guarda ambiente como '1' (pruebas) o '2' (producción)
 const AMBIENTE_MAP = { '1': 'pruebas', '2': 'produccion' };
@@ -378,5 +379,184 @@ export const emitirFacturaDirecta = async (req, res) => {
     return res.status(500).json({ status: 'error', mensaje: 'Error al emitir factura', detalle: error.message });
   } finally {
     client.release();
+  }
+};
+
+// ── RIDE PDF ──────────────────────────────────────────────────────────────────
+export const getRIDE = async (req, res) => {
+  try {
+    const { id }     = req.params;
+    const tenant_id  = req.usuario.tenant_id;
+
+    const invResult = await pool.query(
+      `SELECT i.*, bs.cedula, bs.nombre_persona, bs.tipo_identificacion
+       FROM invoices i
+       LEFT JOIN bill_splits bs ON i.bill_split_id = bs.id
+       WHERE i.id = $1 AND i.tenant_id = $2`,
+      [id, tenant_id]
+    );
+    if (invResult.rows.length === 0) {
+      return res.status(404).json({ status: 'error', mensaje: 'Factura no encontrada' });
+    }
+    const invoice  = invResult.rows[0];
+    const cliente  = {
+      cedula:              invoice.cedula,
+      nombre_persona:      invoice.nombre_persona,
+      tipo_identificacion: invoice.tipo_identificacion,
+    };
+
+    const tenantResult = await pool.query(
+      'SELECT nombre, ruc, direccion, establecimiento, punto_emision FROM tenants WHERE id = $1',
+      [tenant_id]
+    );
+    const tenant = tenantResult.rows[0] || {};
+
+    const itemsResult = await pool.query(
+      `SELECT oi.nombre_producto, bsi.cantidad, oi.precio_unitario
+       FROM bill_split_items bsi
+       JOIN order_items oi ON bsi.order_item_id = oi.id
+       WHERE bsi.bill_split_id = $1`,
+      [invoice.bill_split_id]
+    );
+
+    const pdfBuf = await generarRIDE({ tenant, invoice, cliente, items: itemsResult.rows });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="RIDE-${invoice.numero_factura}.pdf"`);
+    res.send(pdfBuf);
+  } catch (error) {
+    console.error('Error generando RIDE:', error);
+    res.status(500).json({ status: 'error', mensaje: 'Error al generar RIDE', detalle: error.message });
+  }
+};
+
+// ── Ticket térmico HTML ───────────────────────────────────────────────────────
+export const getTicket = async (req, res) => {
+  try {
+    const { id }    = req.params;
+    const tenant_id = req.usuario.tenant_id;
+
+    const invResult = await pool.query(
+      `SELECT i.*, bs.cedula, bs.nombre_persona
+       FROM invoices i
+       LEFT JOIN bill_splits bs ON i.bill_split_id = bs.id
+       WHERE i.id = $1 AND i.tenant_id = $2`,
+      [id, tenant_id]
+    );
+    if (invResult.rows.length === 0) {
+      return res.status(404).json({ status: 'error', mensaje: 'Factura no encontrada' });
+    }
+    const invoice = invResult.rows[0];
+
+    const tenantResult = await pool.query(
+      'SELECT nombre, ruc, direccion FROM tenants WHERE id = $1',
+      [tenant_id]
+    );
+    const tenant = tenantResult.rows[0] || {};
+
+    const itemsResult = await pool.query(
+      `SELECT oi.nombre_producto, bsi.cantidad, oi.precio_unitario
+       FROM bill_split_items bsi
+       JOIN order_items oi ON bsi.order_item_id = oi.id
+       WHERE bsi.bill_split_id = $1`,
+      [invoice.bill_split_id]
+    );
+    const items = itemsResult.rows;
+
+    function fmtDate(iso) {
+      if (!iso) return '—';
+      return new Date(iso).toLocaleString('es-EC', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      });
+    }
+
+    const filas = items.map(item => {
+      const sub = (Number(item.cantidad) * parseFloat(item.precio_unitario)).toFixed(2);
+      return `<tr>
+        <td style="padding:2px 0">${item.nombre_producto}</td>
+        <td style="text-align:center">${item.cantidad}</td>
+        <td style="text-align:right">$${parseFloat(item.precio_unitario).toFixed(2)}</td>
+        <td style="text-align:right">$${sub}</td>
+      </tr>`;
+    }).join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Ticket ${invoice.numero_factura}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      width: 280px;
+      padding: 10px;
+      color: #000;
+    }
+    .center  { text-align: center; }
+    .bold    { font-weight: bold; }
+    .sep     { border-top: 1px dashed #000; margin: 6px 0; }
+    table    { width: 100%; border-collapse: collapse; }
+    th       { font-size: 11px; border-bottom: 1px dashed #000; padding-bottom: 3px; }
+    td       { font-size: 11px; }
+    .total-row td { font-weight: bold; border-top: 1px dashed #000; padding-top: 4px; }
+    @media print {
+      @page { margin: 0; size: 80mm auto; }
+      body  { width: 72mm; }
+    }
+  </style>
+</head>
+<body>
+  <p class="center bold" style="font-size:14px">${tenant.nombre || 'Local'}</p>
+  <p class="center">RUC: ${tenant.ruc || ''}</p>
+  <p class="center">${tenant.direccion || ''}</p>
+  <div class="sep"></div>
+  <p class="center bold">FACTURA</p>
+  <p class="center">${invoice.numero_factura}</p>
+  <p class="center" style="font-size:10px">${fmtDate(invoice.emitido_en)}</p>
+  <div class="sep"></div>
+  <p><b>Cliente:</b> ${invoice.nombre_persona || 'CONSUMIDOR FINAL'}</p>
+  <p><b>RUC/CI:</b> ${invoice.cedula || '—'}</p>
+  <div class="sep"></div>
+  <table>
+    <thead>
+      <tr>
+        <th style="text-align:left">Descripción</th>
+        <th>Cant.</th>
+        <th style="text-align:right">P.U.</th>
+        <th style="text-align:right">Subtotal</th>
+      </tr>
+    </thead>
+    <tbody>${filas}</tbody>
+    <tfoot>
+      <tr>
+        <td colspan="3" style="text-align:right;padding-top:4px;border-top:1px dashed #000">Subtotal:</td>
+        <td style="text-align:right;border-top:1px dashed #000">$${parseFloat(invoice.subtotal || 0).toFixed(2)}</td>
+      </tr>
+      <tr>
+        <td colspan="3" style="text-align:right">IVA 15%:</td>
+        <td style="text-align:right">$${parseFloat(invoice.iva || 0).toFixed(2)}</td>
+      </tr>
+      <tr class="total-row">
+        <td colspan="3" style="text-align:right">TOTAL:</td>
+        <td style="text-align:right">$${parseFloat(invoice.total).toFixed(2)}</td>
+      </tr>
+    </tfoot>
+  </table>
+  <div class="sep"></div>
+  <p class="center" style="font-size:10px">Autorización: ${invoice.numero_autorizacion || '—'}</p>
+  <p class="center" style="font-size:10px;margin-top:8px">¡Gracias por su visita!</p>
+  <p class="center" style="font-size:9px;margin-top:4px">Trynova Tab</p>
+  <script>window.onload = function(){ window.print(); };</script>
+</body>
+</html>`;
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (error) {
+    console.error('Error generando ticket:', error);
+    res.status(500).json({ status: 'error', mensaje: 'Error al generar ticket', detalle: error.message });
   }
 };

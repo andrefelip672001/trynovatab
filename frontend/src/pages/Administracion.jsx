@@ -2,6 +2,12 @@ import { useState, useEffect } from 'react';
 import { tableService, categoryService, productService, inventoryService, recipeService } from '../services/api';
 import Layout from '../components/Layout';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+function descargarPDF(path) {
+  const token = localStorage.getItem('trynova_token');
+  window.open(`${API_BASE}${path}?token=${token}`, '_blank');
+}
+
 export default function Administracion() {
 
   const [tab, setTab] = useState('mesas');
@@ -575,6 +581,20 @@ export default function Administracion() {
           {/* ── Tab Inventario ── */}
           {tab === 'inventario' && (
             <div className="space-y-5">
+
+              {/* Botón reporte */}
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => descargarPDF('/inventory/reporte')}
+                  className="flex items-center gap-2 text-sm px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-medium transition-colors"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  Descargar reporte PDF
+                </button>
+              </div>
 
               {/* Nuevo insumo */}
               <form
