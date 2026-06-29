@@ -63,6 +63,11 @@ export const productService = {
     apiRequest(`/products/${id}`, {
       method: 'PUT',
       body: JSON.stringify(datos)
+    }),
+  agregarStock: (id, cantidad) =>
+    apiRequest(`/products/${id}/agregar-stock`, {
+      method: 'POST',
+      body: JSON.stringify({ cantidad })
     })
 };
 

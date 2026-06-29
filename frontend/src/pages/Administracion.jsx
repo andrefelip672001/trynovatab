@@ -55,9 +55,13 @@ export default function Administracion() {
   const [costoInsumo, setCostoInsumo]             = useState('');
   const [guardandoInsumo, setGuardandoInsumo]     = useState(false);
 
-  // Agregar stock inline
+  // Agregar stock inline (insumos)
   const [insumoStockId, setInsumoStockId]   = useState(null);
   const [cantidadStock, setCantidadStock]   = useState('');
+
+  // Agregar stock inline (productos directos)
+  const [productoStockId, setProductoStockId] = useState(null);
+  const [cantidadStockDirecto, setCantidadStockDirecto] = useState('');
 
   // Producto directo
   const [nombreDirecto, setNombreDirecto]                   = useState('');
@@ -239,6 +243,21 @@ export default function Administracion() {
       await inventoryService.agregarStock(insumoId, cant);
       setInsumoStockId(null);
       setCantidadStock('');
+      await cargarTodo();
+      mostrarExito('Stock actualizado');
+    } catch (err) {
+      setError(err.message || 'No se pudo actualizar el stock');
+    }
+  }
+
+  async function handleAgregarStockDirecto(productoId) {
+    const cant = parseFloat(cantidadStockDirecto);
+    if (!cant || cant <= 0) return;
+    try {
+      setError('');
+      await productService.agregarStock(productoId, cant);
+      setProductoStockId(null);
+      setCantidadStockDirecto('');
       await cargarTodo();
       mostrarExito('Stock actualizado');
     } catch (err) {
@@ -871,26 +890,75 @@ export default function Administracion() {
                     </p>
                     <div className="space-y-2">
                       {productosDirectos.map(p => {
-                        const stockBajo = parseFloat(p.stock_directo) <= parseFloat(p.stock_minimo_directo);
+                        const stockBajo    = parseFloat(p.stock_directo) <= parseFloat(p.stock_minimo_directo);
+                        const editandoEste = productoStockId === p.id;
                         return (
-                          <div
-                            key={p.id}
-                            className={`flex justify-between items-center rounded-lg px-4 py-2.5 text-sm ${
+                          <div key={p.id}>
+                            <div className={`flex justify-between items-center rounded-lg px-4 py-2.5 text-sm ${
                               stockBajo ? 'bg-amber-50 border border-amber-200' : 'bg-gray-50'
-                            }`}
-                          >
-                            <div>
-                              <p className="text-gray-900">{p.nombre}</p>
-                              <p className="text-gray-400 text-xs mt-0.5">
-                                {p.codigo_barras || 'Sin código'} · {p.categoria_nombre || 'Sin categoría'}
-                              </p>
+                            }`}>
+                              <div>
+                                <p className="text-gray-900">{p.nombre}</p>
+                                <p className="text-gray-400 text-xs mt-0.5">
+                                  {p.codigo_barras || 'Sin código'} · {p.categoria_nombre || 'Sin categoría'}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <div className="text-right">
+                                  <p className="text-sm text-gray-700">${parseFloat(p.precio).toFixed(2)}</p>
+                                  <p className={`text-xs font-medium ${stockBajo ? 'text-amber-600' : 'text-gray-400'}`}>
+                                    Stock: {parseFloat(p.stock_directo).toFixed(0)}
+                                  </p>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setProductoStockId(editandoEste ? null : p.id);
+                                    setCantidadStockDirecto('');
+                                  }}
+                                  className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 text-xs font-bold flex items-center justify-center transition-colors"
+                                  title="Agregar stock"
+                                >
+                                  +
+                                </button>
+                              </div>
                             </div>
-                            <div className="text-right">
-                              <p className="text-sm text-gray-700">${parseFloat(p.precio).toFixed(2)}</p>
-                              <p className={`text-xs font-medium ${stockBajo ? 'text-amber-600' : 'text-gray-400'}`}>
-                                Stock: {parseFloat(p.stock_directo).toFixed(0)}
-                              </p>
-                            </div>
+
+                            {editandoEste && (
+                              <div className="flex items-center gap-2 mt-1.5 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+                                <span className="text-xs text-blue-700 font-medium whitespace-nowrap">
+                                  Agregar stock:
+                                </span>
+                                <input
+                                  type="number"
+                                  step="1"
+                                  min="1"
+                                  value={cantidadStockDirecto}
+                                  onChange={e => setCantidadStockDirecto(e.target.value)}
+                                  onKeyDown={e => {
+                                    if (e.key === 'Enter') handleAgregarStockDirecto(p.id);
+                                    if (e.key === 'Escape') { setProductoStockId(null); setCantidadStockDirecto(''); }
+                                  }}
+                                  placeholder="Cantidad (unidades)"
+                                  autoFocus
+                                  className="flex-1 border border-blue-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:border-blue-500"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleAgregarStockDirecto(p.id)}
+                                  className="text-xs px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium transition-colors whitespace-nowrap"
+                                >
+                                  Agregar
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => { setProductoStockId(null); setCantidadStockDirecto(''); }}
+                                  className="text-xs px-2 py-1 text-gray-500 hover:text-gray-700 transition-colors"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            )}
                           </div>
                         );
                       })}

@@ -149,6 +149,46 @@ export const buscarProductos = async (req, res) => {
   }
 };
 
+// Agregar stock a un producto directo
+export const agregarStockDirecto = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { cantidad } = req.body;
+    const tenant_id = req.usuario.tenant_id;
+
+    if (!cantidad || cantidad <= 0) {
+      return res.status(400).json({
+        status: 'error',
+        mensaje: 'La cantidad debe ser mayor a 0'
+      });
+    }
+
+    const result = await pool.query(
+      `UPDATE products
+       SET stock_directo = stock_directo + $1, updated_at = NOW()
+       WHERE id = $2 AND tenant_id = $3 AND es_directo = true
+       RETURNING *`,
+      [cantidad, id, tenant_id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        status: 'error',
+        mensaje: 'Producto directo no encontrado'
+      });
+    }
+
+    res.json({
+      status: 'ok',
+      mensaje: 'Stock actualizado correctamente',
+      producto: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error agregando stock directo:', error);
+    res.status(500).json({ status: 'error', mensaje: error.message });
+  }
+};
+
 // Actualizar un producto (nombre, precio, descripcion, categoria, activo)
 export const actualizarProducto = async (req, res) => {
   try {
