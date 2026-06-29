@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { crearInsumo, listarInsumos, listarStockBajo, reporteInventario } from '../controllers/inventoryController.js';
+import { crearInsumo, listarInsumos, listarStockBajo, reporteInventario, agregarStock } from '../controllers/inventoryController.js';
 import { verificarToken, verificarRol } from '../middleware/authMiddleware.js';
 
 const router = Router();
@@ -10,5 +10,6 @@ router.get('/', verificarToken, rolesPermitidos, listarInsumos);
 router.get('/stock-bajo', verificarToken, rolesPermitidos, listarStockBajo);
 router.get('/reporte', verificarToken, verificarRol('admin_local', 'cajero'), reporteInventario);
 router.post('/', verificarToken, verificarRol('admin_local'), crearInsumo);
+router.post('/:id/agregar-stock', verificarToken, verificarRol('admin_local'), agregarStock);
 
 export default router;

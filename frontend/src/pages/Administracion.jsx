@@ -55,6 +55,10 @@ export default function Administracion() {
   const [costoInsumo, setCostoInsumo]             = useState('');
   const [guardandoInsumo, setGuardandoInsumo]     = useState(false);
 
+  // Agregar stock inline
+  const [insumoStockId, setInsumoStockId]   = useState(null);
+  const [cantidadStock, setCantidadStock]   = useState('');
+
   // Producto directo
   const [nombreDirecto, setNombreDirecto]                   = useState('');
   const [codigoBarrasDirecto, setCodigoBarrasDirecto]       = useState('');
@@ -224,6 +228,21 @@ export default function Administracion() {
       setError(err.message || 'No se pudo crear el insumo');
     } finally {
       setGuardandoInsumo(false);
+    }
+  }
+
+  async function handleAgregarStock(insumoId) {
+    const cant = parseFloat(cantidadStock);
+    if (!cant || cant <= 0) return;
+    try {
+      setError('');
+      await inventoryService.agregarStock(insumoId, cant);
+      setInsumoStockId(null);
+      setCantidadStock('');
+      await cargarTodo();
+      mostrarExito('Stock actualizado');
+    } catch (err) {
+      setError(err.message || 'No se pudo actualizar el stock');
     }
   }
 
@@ -692,25 +711,72 @@ export default function Administracion() {
                 </p>
                 <div className="space-y-2">
                   {insumos.map(insumo => {
-                    const stockBajo = parseFloat(insumo.stock) <= parseFloat(insumo.stock_minimo);
+                    const stockBajo   = parseFloat(insumo.stock) <= parseFloat(insumo.stock_minimo);
+                    const editandoEste = insumoStockId === insumo.id;
                     return (
-                      <div
-                        key={insumo.id}
-                        className={`flex justify-between items-center rounded-lg px-4 py-2.5 text-sm ${
-                          stockBajo
-                            ? 'bg-amber-50 border border-amber-200'
-                            : 'bg-gray-50'
-                        }`}
-                      >
-                        <div>
-                          <p className="text-gray-900">{insumo.nombre}</p>
-                          <p className="text-gray-400 text-xs mt-0.5">
-                            Mínimo: {insumo.stock_minimo} {insumo.unidad}
-                          </p>
+                      <div key={insumo.id}>
+                        <div className={`flex justify-between items-center rounded-lg px-4 py-2.5 text-sm ${
+                          stockBajo ? 'bg-amber-50 border border-amber-200' : 'bg-gray-50'
+                        }`}>
+                          <div>
+                            <p className="text-gray-900">{insumo.nombre}</p>
+                            <p className="text-gray-400 text-xs mt-0.5">
+                              Mínimo: {insumo.stock_minimo} {insumo.unidad}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className={`font-medium text-sm ${stockBajo ? 'text-amber-600' : 'text-gray-500'}`}>
+                              {parseFloat(insumo.stock).toFixed(2)} {insumo.unidad}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setInsumoStockId(editandoEste ? null : insumo.id);
+                                setCantidadStock('');
+                              }}
+                              className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 text-xs font-bold flex items-center justify-center transition-colors"
+                              title="Agregar stock"
+                            >
+                              +
+                            </button>
+                          </div>
                         </div>
-                        <span className={`font-medium text-sm ${stockBajo ? 'text-amber-600' : 'text-gray-500'}`}>
-                          {parseFloat(insumo.stock).toFixed(2)} {insumo.unidad}
-                        </span>
+
+                        {editandoEste && (
+                          <div className="flex items-center gap-2 mt-1.5 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+                            <span className="text-xs text-blue-700 font-medium whitespace-nowrap">
+                              Agregar stock:
+                            </span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0.01"
+                              value={cantidadStock}
+                              onChange={e => setCantidadStock(e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') handleAgregarStock(insumo.id);
+                                if (e.key === 'Escape') { setInsumoStockId(null); setCantidadStock(''); }
+                              }}
+                              placeholder={`Cantidad (${insumo.unidad})`}
+                              autoFocus
+                              className="flex-1 border border-blue-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:border-blue-500"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleAgregarStock(insumo.id)}
+                              className="text-xs px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium transition-colors whitespace-nowrap"
+                            >
+                              Agregar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { setInsumoStockId(null); setCantidadStock(''); }}
+                              className="text-xs px-2 py-1 text-gray-500 hover:text-gray-700 transition-colors"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        )}
                       </div>
                     );
                   })}

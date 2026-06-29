@@ -124,6 +124,11 @@ export const inventoryService = {
     apiRequest('/inventory', {
       method: 'POST',
       body: JSON.stringify(datos)
+    }),
+  agregarStock: (id, cantidad) =>
+    apiRequest(`/inventory/${id}/agregar-stock`, {
+      method: 'POST',
+      body: JSON.stringify({ cantidad })
     })
 };
 

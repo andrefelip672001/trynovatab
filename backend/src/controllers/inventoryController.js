@@ -96,6 +96,46 @@ export const listarStockBajo = async (req, res) => {
   }
 };
 
+// Agregar stock a un insumo
+export const agregarStock = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { cantidad } = req.body;
+    const tenant_id = req.usuario.tenant_id;
+
+    if (!cantidad || cantidad <= 0) {
+      return res.status(400).json({
+        status: 'error',
+        mensaje: 'La cantidad debe ser mayor a 0'
+      });
+    }
+
+    const result = await pool.query(
+      `UPDATE inventory
+       SET stock = stock + $1, updated_at = NOW()
+       WHERE id = $2 AND tenant_id = $3
+       RETURNING *`,
+      [cantidad, id, tenant_id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        status: 'error',
+        mensaje: 'Insumo no encontrado'
+      });
+    }
+
+    res.json({
+      status: 'ok',
+      mensaje: 'Stock actualizado correctamente',
+      insumo: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error agregando stock:', error);
+    res.status(500).json({ status: 'error', mensaje: error.message });
+  }
+};
+
 // Reporte PDF de inventario
 export const reporteInventario = async (req, res) => {
   try {
