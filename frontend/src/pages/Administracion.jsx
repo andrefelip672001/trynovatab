@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { tableService, categoryService, productService, inventoryService, recipeService } from '../services/api';
+import { tableService, categoryService, productService, inventoryService, recipeService, importService } from '../services/api';
 import Layout from '../components/Layout';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
@@ -63,6 +63,11 @@ export default function Administracion() {
   const [productoStockId, setProductoStockId] = useState(null);
   const [cantidadStockDirecto, setCantidadStockDirecto] = useState('');
 
+  // Importación masiva
+  const [archivoImport, setArchivoImport]       = useState(null);
+  const [importando, setImportando]             = useState(false);
+  const [resultadoImport, setResultadoImport]   = useState(null);
+
   // Producto directo
   const [nombreDirecto, setNombreDirecto]                   = useState('');
   const [codigoBarrasDirecto, setCodigoBarrasDirecto]       = useState('');
@@ -120,6 +125,23 @@ export default function Administracion() {
       setError(err.message || 'No se pudo crear la mesa');
     } finally {
       setGuardandoMesa(false);
+    }
+  }
+
+  async function handleImportar() {
+    if (!archivoImport) return;
+    try {
+      setImportando(true);
+      setResultadoImport(null);
+      setError('');
+      const data = await importService.importarProductos(archivoImport);
+      setResultadoImport(data);
+      setArchivoImport(null);
+      await cargarTodo();
+    } catch (err) {
+      setError(err.message || 'Error al importar');
+    } finally {
+      setImportando(false);
     }
   }
 
@@ -426,6 +448,65 @@ export default function Administracion() {
           {/* ── Tab Menú ── */}
           {tab === 'menu' && (
             <div className="space-y-5">
+
+              {/* Importar productos */}
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-4">
+                <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">
+                  Importar productos desde Excel / CSV
+                </p>
+
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => importService.descargarPlantilla()}
+                    className="text-sm px-4 py-2 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium transition-colors"
+                  >
+                    ⬇️ Descargar plantilla Excel
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <label className="flex-1 min-w-0">
+                    <input
+                      type="file"
+                      accept=".xlsx,.xls,.csv"
+                      className="hidden"
+                      onChange={e => {
+                        setArchivoImport(e.target.files[0] || null);
+                        setResultadoImport(null);
+                      }}
+                    />
+                    <div className="border border-dashed border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-500 cursor-pointer hover:border-blue-400 hover:text-blue-600 transition-colors truncate">
+                      {archivoImport ? archivoImport.name : 'Seleccionar archivo .xlsx o .csv...'}
+                    </div>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleImportar}
+                    disabled={!archivoImport || importando}
+                    className="px-4 py-2.5 rounded-lg text-sm font-medium text-white disabled:opacity-40 transition-colors"
+                    style={{ background: '#4f9cf9' }}
+                  >
+                    {importando ? 'Importando...' : 'Importar productos'}
+                  </button>
+                </div>
+
+                {resultadoImport && (
+                  <div className={`rounded-lg px-4 py-3 text-sm ${
+                    resultadoImport.errores?.length ? 'bg-amber-50 border border-amber-200' : 'bg-emerald-50 border border-emerald-200'
+                  }`}>
+                    <p className="font-medium text-gray-900">
+                      ✅ {resultadoImport.creados} creados · {resultadoImport.actualizados} actualizados
+                      {resultadoImport.errores?.length ? ` · ⚠️ ${resultadoImport.errores.length} errores` : ''}
+                    </p>
+                    {resultadoImport.errores?.length > 0 && (
+                      <ul className="mt-2 space-y-0.5 text-xs text-amber-800">
+                        {resultadoImport.errores.map((e, i) => <li key={i}>• {e}</li>)}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* Nueva categoría */}
               <form

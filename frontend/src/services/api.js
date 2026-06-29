@@ -4,10 +4,10 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 async function apiRequest(endpoint, options = {}) {
   const token = localStorage.getItem('trynova_token');
 
-  const headers = {
-    'Content-Type': 'application/json',
-    ...options.headers
-  };
+  // No fijar Content-Type cuando el body es FormData (el browser lo pone con el boundary)
+  const headers = options.body instanceof FormData
+    ? { ...options.headers }
+    : { 'Content-Type': 'application/json', ...options.headers };
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -148,6 +148,18 @@ export const recipeService = {
 
 export const statsService = {
   dashboard: () => apiRequest('/stats/dashboard')
+};
+
+export const importService = {
+  descargarPlantilla: () => {
+    const token = localStorage.getItem('trynova_token');
+    window.open(`${API_URL}/import/plantilla?token=${token}`, '_blank');
+  },
+  importarProductos: (archivo) => {
+    const formData = new FormData();
+    formData.append('archivo', archivo);
+    return apiRequest('/import/productos', { method: 'POST', body: formData });
+  }
 };
 
 export const invoiceService = {
