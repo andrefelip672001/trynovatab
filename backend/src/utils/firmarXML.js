@@ -19,8 +19,9 @@ export function firmarXML(xmlStr, p12Path, p12Pass) {
   const parser = new DOMParser();
   const c14n   = new C14nCanonicalization();
 
-  // ── 1. Cargar P12 ──────────────────────────────────────────────────────────
-  const p12Der = forge.util.createBuffer(readFileSync(p12Path).toString('binary'));
+  // ── 1. Cargar P12 (ruta de archivo o Buffer/Base64) ───────────────────────
+  const p12Raw = Buffer.isBuffer(p12Path) ? p12Path : readFileSync(p12Path);
+  const p12Der = forge.util.createBuffer(p12Raw.toString('binary'));
   const p12    = forge.pkcs12.pkcs12FromAsn1(forge.asn1.fromDer(p12Der), p12Pass);
 
   const privateKey = p12

@@ -36,7 +36,8 @@ export const emitirFactura = async (req, res) => {
   // ── b. Obtener tenant completo ─────────────────────────────────────────────
   const tenantResult = await pool.query(
     `SELECT id, nombre, ruc, direccion, establecimiento, punto_emision,
-            ambiente_sri, secuencial_actual
+            ambiente_sri, secuencial_actual,
+            certificado_path, certificado_password, certificado_base64
      FROM tenants WHERE id = $1`,
     [tenant_id]
   );
@@ -94,9 +95,11 @@ export const emitirFactura = async (req, res) => {
     });
 
     // f. Firmar XML
-    const certPath     = tenant.certificado_path     || process.env.CERT_PATH;
+    const certInput    = tenant.certificado_base64
+      ? Buffer.from(tenant.certificado_base64, 'base64')
+      : (tenant.certificado_path || process.env.CERT_PATH);
     const certPassword = tenant.certificado_password || process.env.CERT_PASSWORD;
-    const xmlFirmado   = firmarXML(xml, certPath, certPassword);
+    const xmlFirmado   = firmarXML(xml, certInput, certPassword);
 
     // g. Enviar al SRI
     const ambienteClave  = String(tenant.ambiente_sri);
@@ -272,7 +275,8 @@ export const emitirFacturaDirecta = async (req, res) => {
     // Obtener tenant con datos de certificado
     const tenantResult = await client.query(
       `SELECT id, nombre, ruc, direccion, establecimiento, punto_emision,
-              ambiente_sri, secuencial_actual, certificado_path, certificado_password
+              ambiente_sri, secuencial_actual,
+              certificado_path, certificado_password, certificado_base64
        FROM tenants WHERE id = $1`,
       [tenant_id]
     );
@@ -302,9 +306,11 @@ export const emitirFacturaDirecta = async (req, res) => {
       secuencial,
     });
 
-    const certPath     = tenant.certificado_path     || process.env.CERT_PATH;
+    const certInput    = tenant.certificado_base64
+      ? Buffer.from(tenant.certificado_base64, 'base64')
+      : (tenant.certificado_path || process.env.CERT_PATH);
     const certPassword = tenant.certificado_password || process.env.CERT_PASSWORD;
-    const xmlFirmado   = firmarXML(xml, certPath, certPassword);
+    const xmlFirmado   = firmarXML(xml, certInput, certPassword);
 
     const ambienteNombre = AMBIENTE_MAP[String(tenant.ambiente_sri)] ?? 'pruebas';
     const recepcion = await enviarAlSRI(xmlFirmado, ambienteNombre);
