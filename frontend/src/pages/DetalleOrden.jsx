@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { orderService, productService, tableService, invoiceService } from '../services/api';
 import Layout from '../components/Layout';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
 export default function DetalleOrden() {
   const { tableId } = useParams();
   const navigate = useNavigate();
@@ -147,10 +149,14 @@ export default function DetalleOrden() {
     try {
       setEmitiendoFactura(true);
       setError('');
-      await invoiceService.emitirDirecta({
+      const data = await invoiceService.emitirDirecta({
         order_id: orden.id,
         identificacion_comprador: identificacionComprador.trim(),
       });
+      if (data.invoice_id) {
+        const token = localStorage.getItem('trynova_token');
+        window.open(`${API_BASE}/invoices/${data.invoice_id}/ticket?token=${token}`, '_blank');
+      }
       navigate('/mesas');
     } catch (err) {
       setError(err.message || 'Error al emitir factura');

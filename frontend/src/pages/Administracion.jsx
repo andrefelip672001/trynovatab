@@ -35,6 +35,7 @@ export default function Administracion() {
   const [descripcionProducto, setDescripcionProducto] = useState('');
   const [precioProducto, setPrecioProducto]           = useState('');
   const [categoriaProducto, setCategoriaProducto]     = useState('');
+  const [tieneIVA, setTieneIVA]                       = useState(true);
   const [guardandoProducto, setGuardandoProducto]     = useState(false);
 
   // Producto (edición)
@@ -43,6 +44,7 @@ export default function Administracion() {
   const [editDescripcion, setEditDescripcion]   = useState('');
   const [editPrecio, setEditPrecio]             = useState('');
   const [editCategoria, setEditCategoria]       = useState('');
+  const [editTieneIVA, setEditTieneIVA]         = useState(true);
   const [guardandoEdicion, setGuardandoEdicion] = useState(false);
 
   // Insumo
@@ -139,11 +141,13 @@ export default function Administracion() {
         descripcion: descripcionProducto || null,
         precio:      Number(precioProducto),
         category_id: categoriaProducto || null,
+        tiene_iva:   tieneIVA,
       });
       setNombreProducto('');
       setDescripcionProducto('');
       setPrecioProducto('');
       setCategoriaProducto('');
+      setTieneIVA(true);
       await cargarTodo();
       mostrarExito('Producto creado');
     } catch (err) {
@@ -159,6 +163,7 @@ export default function Administracion() {
     setEditDescripcion(producto.descripcion || '');
     setEditPrecio(producto.precio);
     setEditCategoria(producto.category_id || '');
+    setEditTieneIVA(producto.tiene_iva !== false);
   }
 
   function cerrarEdicion() { setProductoEditando(null); }
@@ -173,6 +178,7 @@ export default function Administracion() {
         descripcion: editDescripcion || null,
         precio:      Number(editPrecio),
         category_id: editCategoria || null,
+        tiene_iva:   editTieneIVA,
       });
       setProductoEditando(null);
       await cargarTodo();
@@ -442,7 +448,7 @@ export default function Administracion() {
                       value={precioProducto}
                       onChange={e => setPrecioProducto(e.target.value)}
                       required
-                      placeholder="Precio"
+                      placeholder="Precio (IVA incluido si aplica)"
                       className={`flex-1 ${inputCls}`}
                     />
                     <select
@@ -456,6 +462,15 @@ export default function Administracion() {
                       ))}
                     </select>
                   </div>
+                  <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={tieneIVA}
+                      onChange={e => setTieneIVA(e.target.checked)}
+                      className="w-4 h-4 rounded accent-blue-500"
+                    />
+                    Precio incluye IVA 15%
+                  </label>
                   <button
                     type="submit"
                     disabled={guardandoProducto}
@@ -508,7 +523,7 @@ export default function Administracion() {
                       value={editPrecio}
                       onChange={e => setEditPrecio(e.target.value)}
                       required
-                      placeholder="Precio"
+                      placeholder="Precio (IVA incluido si aplica)"
                       className={`flex-1 ${inputCls}`}
                     />
                     <select
@@ -522,6 +537,15 @@ export default function Administracion() {
                       ))}
                     </select>
                   </div>
+                  <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={editTieneIVA}
+                      onChange={e => setEditTieneIVA(e.target.checked)}
+                      className="w-4 h-4 rounded accent-blue-500"
+                    />
+                    Precio incluye IVA 15%
+                  </label>
                   <button
                     type="submit"
                     disabled={guardandoEdicion}

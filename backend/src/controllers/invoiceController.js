@@ -51,9 +51,11 @@ export const emitirFactura = async (req, res) => {
 
   // ── c. Obtener items del split ─────────────────────────────────────────────
   const itemsResult = await pool.query(
-    `SELECT oi.nombre_producto, bsi.cantidad, oi.precio_unitario
+    `SELECT oi.nombre_producto, bsi.cantidad, oi.precio_unitario,
+            COALESCE(p.tiene_iva, true) AS tiene_iva
      FROM bill_split_items bsi
      JOIN order_items oi ON bsi.order_item_id = oi.id
+     LEFT JOIN products p ON oi.product_id = p.id
      WHERE bsi.bill_split_id = $1`,
     [split_id]
   );
@@ -224,13 +226,13 @@ export const emitirFacturaDirecta = async (req, res) => {
 
   // Detectar tipo de identificación
   const idStr = (identificacion_comprador || '').trim();
-  let cedula, tipo_identificacion, nombre_persona;
+  let cedula, tipo_identificacion;
   if (idStr.length === 13) {
-    tipo_identificacion = '04'; cedula = idStr; nombre_persona = 'Cliente';
+    tipo_identificacion = '04'; cedula = idStr;
   } else if (idStr.length === 10) {
-    tipo_identificacion = '05'; cedula = idStr; nombre_persona = 'Cliente';
+    tipo_identificacion = '05'; cedula = idStr;
   } else {
-    tipo_identificacion = '07'; cedula = '9999999999999'; nombre_persona = 'CONSUMIDOR FINAL';
+    tipo_identificacion = '07'; cedula = '9999999999999';
   }
 
   const client = await pool.connect();
@@ -258,6 +260,11 @@ export const emitirFacturaDirecta = async (req, res) => {
       return res.status(400).json({ status: 'error', mensaje: 'La orden no tiene items' });
     }
 
+    // Nombre del cliente: notas de la orden o consumidor final
+    const nombre_persona = tipo_identificacion === '07'
+      ? 'CONSUMIDOR FINAL'
+      : (orden.notas || 'Cliente');
+
     // Crear bill_split con todos los items
     const splitResult = await client.query(
       `INSERT INTO bill_splits (order_id, nombre_persona, cedula, tipo_identificacion)
@@ -283,11 +290,13 @@ export const emitirFacturaDirecta = async (req, res) => {
     );
     const tenant = tenantResult.rows[0];
 
-    // Items para generarFacturaXML
+    // Items para generarFacturaXML (con tiene_iva del producto)
     const itemsResult = await client.query(
-      `SELECT oi.nombre_producto, bsi.cantidad, oi.precio_unitario
+      `SELECT oi.nombre_producto, bsi.cantidad, oi.precio_unitario,
+              COALESCE(p.tiene_iva, true) AS tiene_iva
        FROM bill_split_items bsi
        JOIN order_items oi ON bsi.order_item_id = oi.id
+       LEFT JOIN products p ON oi.product_id = p.id
        WHERE bsi.bill_split_id = $1`,
       [split_id]
     );
@@ -342,16 +351,18 @@ export const emitirFacturaDirecta = async (req, res) => {
     ].join('-');
 
     // Guardar factura
-    await client.query(
+    const invInsert = await client.query(
       `INSERT INTO invoices
          (tenant_id, bill_split_id, clave_acceso, numero_factura,
           subtotal, iva, total, estado, emitido_en,
           numero_autorizacion, fecha_autorizacion, xml_autorizado)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,'autorizada',NOW(),$8,$9,$10)`,
+       VALUES ($1,$2,$3,$4,$5,$6,$7,'autorizada',NOW(),$8,$9,$10)
+       RETURNING id`,
       [tenant_id, split_id, claveAcceso, numeroFactura,
        totalSinImpuestos, valorIVA, importeTotal,
        autorizacion.numeroAutorizacion, autorizacion.fechaAutorizacion, autorizacion.xml]
     );
+    const invoice_id = invInsert.rows[0].id;
 
     // Cerrar orden y liberar mesa
     await client.query(
@@ -366,7 +377,8 @@ export const emitirFacturaDirecta = async (req, res) => {
     await client.query('COMMIT');
 
     return res.status(201).json({
-      status: 'ok',
+      status:              'ok',
+      invoice_id,
       numero_factura:      numeroFactura,
       numero_autorizacion: autorizacion.numeroAutorizacion,
       fecha_autorizacion:  autorizacion.fechaAutorizacion,

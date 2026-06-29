@@ -4,7 +4,8 @@ import pool from '../config/db.js';
 export const crearProducto = async (req, res) => {
   try {
     const { nombre, descripcion, precio, category_id,
-            codigo_barras, es_directo, stock_directo, stock_minimo_directo } = req.body;
+            codigo_barras, es_directo, stock_directo, stock_minimo_directo,
+            tiene_iva } = req.body;
     const tenant_id = req.usuario.tenant_id;
 
     if (!tenant_id) {
@@ -46,12 +47,13 @@ export const crearProducto = async (req, res) => {
     const result = await pool.query(
       `INSERT INTO products
          (tenant_id, category_id, nombre, descripcion, precio, activo,
-          codigo_barras, es_directo, stock_directo, stock_minimo_directo)
-       VALUES ($1, $2, $3, $4, $5, true, $6, $7, $8, $9)
+          codigo_barras, es_directo, stock_directo, stock_minimo_directo, tiene_iva)
+       VALUES ($1, $2, $3, $4, $5, true, $6, $7, $8, $9, $10)
        RETURNING *`,
       [tenant_id, category_id || null, nombre, descripcion || null, precio,
        codigo_barras || null, es_directo || false,
-       stock_directo || 0, stock_minimo_directo || 0]
+       stock_directo || 0, stock_minimo_directo || 0,
+       tiene_iva !== false]
     );
 
     res.status(201).json({
