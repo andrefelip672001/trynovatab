@@ -24,7 +24,16 @@ const PORT = process.env.PORT || 3000;
 
 
 // Middlewares básicos - SIEMPRE primero, antes de cualquier ruta
-app.use(cors());
+const corsOptions = {
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'https://trynovatab-bhvgnp5pj-andres-trujillo.vercel.app',
+    /\.vercel\.app$/
+  ],
+  credentials: true
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Rutas de la aplicación
