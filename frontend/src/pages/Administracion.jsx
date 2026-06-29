@@ -702,7 +702,12 @@ export default function Administracion() {
                         <p className="text-gray-400 text-xs">{producto.categoria_nombre || 'Sin categoría'}</p>
                       </button>
                       <div className="flex items-center gap-3">
-                        <span className="text-gray-500 text-sm">${parseFloat(producto.precio).toFixed(2)}</span>
+                        <span className="text-gray-500 text-sm">
+                          ${parseFloat(producto.precio).toFixed(2)}
+                          {producto.tiene_iva === false && (
+                            <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 ml-2">IVA 0%</span>
+                          )}
+                        </span>
                         <button
                           onClick={() => handleToggleActivo(producto)}
                           className={`text-xs px-2.5 py-1 rounded-lg transition border ${
@@ -986,7 +991,12 @@ export default function Administracion() {
                               </div>
                               <div className="flex items-center gap-3">
                                 <div className="text-right">
-                                  <p className="text-sm text-gray-700">${parseFloat(p.precio).toFixed(2)}</p>
+                                  <p className="text-sm text-gray-700">
+                                    ${parseFloat(p.precio).toFixed(2)}
+                                    {p.tiene_iva === false && (
+                                      <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 ml-2">IVA 0%</span>
+                                    )}
+                                  </p>
                                   <p className={`text-xs font-medium ${stockBajo ? 'text-amber-600' : 'text-gray-400'}`}>
                                     Stock: {parseFloat(p.stock_directo).toFixed(0)}
                                   </p>
