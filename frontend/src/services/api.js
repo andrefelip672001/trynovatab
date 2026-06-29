@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 // Función auxiliar para hacer peticiones, agregando el token automáticamente si existe
 async function apiRequest(endpoint, options = {}) {
