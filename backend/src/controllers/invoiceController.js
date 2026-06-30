@@ -69,20 +69,20 @@ export const emitirFactura = async (req, res) => {
 
   const items = itemsResult.rows;
 
-  // ── d–j. Transacción: incrementar secuencial + guardar invoice ─────────────
+  // ── d. Incrementar secuencial ANTES de la transacción ────────────────────
+  // Operación separada: si el SRI rechaza y se hace ROLLBACK, el secuencial
+  // NO se revierte, evitando que siempre se envíe la misma clave de acceso.
+  const secResult = await pool.query(
+    `UPDATE tenants SET secuencial_actual = secuencial_actual + 1
+     WHERE id = $1 RETURNING secuencial_actual`,
+    [tenant_id]
+  );
+  const secuencial = secResult.rows[0].secuencial_actual;
+
+  // ── e–j. Transacción: guardar invoice ─────────────────────────────────────
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-
-    // d. Incrementar secuencial con bloqueo para evitar duplicados concurrentes
-    const seqResult = await client.query(
-      `UPDATE tenants
-       SET secuencial_actual = secuencial_actual + 1
-       WHERE id = $1
-       RETURNING secuencial_actual`,
-      [tenant_id]
-    );
-    const secuencial = seqResult.rows[0].secuencial_actual;
 
     // e. Generar XML (también retorna los totales calculados)
     const { xml, claveAcceso, totalSinImpuestos, valorIVA, importeTotal } = generarFacturaXML({
@@ -235,6 +235,14 @@ export const emitirFacturaDirecta = async (req, res) => {
     tipo_identificacion = '07'; cedula = '9999999999999';
   }
 
+  // Incrementar secuencial ANTES de la transacción (no se revierte si el SRI rechaza)
+  const secResultDirecta = await pool.query(
+    `UPDATE tenants SET secuencial_actual = secuencial_actual + 1
+     WHERE id = $1 RETURNING secuencial_actual`,
+    [tenant_id]
+  );
+  const secuencial = secResultDirecta.rows[0].secuencial_actual;
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -300,13 +308,6 @@ export const emitirFacturaDirecta = async (req, res) => {
        WHERE bsi.bill_split_id = $1`,
       [split_id]
     );
-
-    // Incrementar secuencial
-    const seqResult = await client.query(
-      `UPDATE tenants SET secuencial_actual = secuencial_actual + 1 WHERE id = $1 RETURNING secuencial_actual`,
-      [tenant_id]
-    );
-    const secuencial = seqResult.rows[0].secuencial_actual;
 
     // Generar, firmar y enviar al SRI
     const { xml, claveAcceso, totalSinImpuestos, valorIVA, importeTotal } = generarFacturaXML({
