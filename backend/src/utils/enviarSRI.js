@@ -21,6 +21,10 @@ export async function enviarAlSRI(xmlFirmado, ambiente = 'pruebas') {
   // El SRI exige el XML en Base64 dentro del elemento <xml>
   const xmlBase64 = Buffer.from(xmlFirmado, 'utf-8').toString('base64');
 
+  console.log('Enviando al SRI, ambiente:', ambiente);
+  console.log('URL webservice:', url);
+  console.log('XML base64 length:', xmlBase64.length);
+
   const soapBody = buildSoapEnvelope(xmlBase64);
 
   let respuestaRaw;
@@ -32,10 +36,14 @@ export async function enviarAlSRI(xmlFirmado, ambiente = 'pruebas') {
       },
       timeout: 30_000, // 30 s — el SRI puede ser lento
     });
+    console.log('Respuesta HTTP status:', response.status);
+    console.log('Respuesta SOAP completa:', String(response.data).substring(0, 500));
     respuestaRaw = response.data;
   } catch (err) {
     // axios lanza un error con response cuando el servidor responde con 4xx/5xx
     if (err.response) {
+      console.log('Respuesta HTTP status:', err.response.status);
+      console.log('Respuesta SOAP completa:', String(err.response.data).substring(0, 500));
       throw new Error(
         `SRI respondió con HTTP ${err.response.status}: ${err.response.statusText}\n${err.response.data}`
       );
