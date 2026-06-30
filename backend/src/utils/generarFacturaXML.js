@@ -6,7 +6,7 @@ export function generarFacturaXML({
   items,     // { nombre_producto, cantidad, precio_unitario, tiene_iva }
   secuencial
 }) {
-  const fechaEmision = new Date();
+  const fechaEmision = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Guayaquil' }));
 
   const claveAcceso = generarClaveAcceso({
     fechaEmision,
