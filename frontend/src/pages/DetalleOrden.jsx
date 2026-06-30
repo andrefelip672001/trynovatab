@@ -1,7 +1,7 @@
 // v2 - consulta contribuyente SRI
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { orderService, productService, tableService, invoiceService, contribuyenteService } from '../services/api';
+import { orderService, productService, tableService, invoiceService } from '../services/api';
 import Layout from '../components/Layout';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
@@ -185,12 +185,17 @@ export default function DetalleOrden() {
       setBuscandoContribuyente(true);
       contribuyenteRef.current = setTimeout(async () => {
         try {
-          const data = await contribuyenteService.consultar(id);
-          console.log('Respuesta contribuyente:', data);
-          console.log('Contribuyente encontrado:', data?.contribuyente);
-          // null del API = no encontrado → guardamos false para distinguirlo
-          // del estado inicial (null = aún no se ha buscado)
-          setContribuyente(data.contribuyente ?? false);
+          const url = `https://srienlinea.sri.gob.ec/sri-catastro-sujeto-servicio-internet/rest/ConsolidadoContribuyente/obtenerPorNumeroruc?numeroRuc=${id}`;
+          const response = await fetch(url);
+          const data = await response.json();
+          if (data && (data.razonSocial || data.nombreComercial)) {
+            setContribuyente({
+              razon_social: data.razonSocial || data.nombreComercial,
+              estado:       data.estadoContribuyenteRuc || 'ACTIVO',
+            });
+          } else {
+            setContribuyente(false);
+          }
         } catch {
           setContribuyente(false);
         } finally {

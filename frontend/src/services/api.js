@@ -150,10 +150,6 @@ export const statsService = {
   dashboard: () => apiRequest('/stats/dashboard')
 };
 
-export const contribuyenteService = {
-  consultar: (ruc) => apiRequest(`/contribuyente/${ruc}`)
-};
-
 export const importService = {
   descargarPlantilla: () => {
     const token = localStorage.getItem('trynova_token');
