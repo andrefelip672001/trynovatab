@@ -185,9 +185,13 @@ export default function DetalleOrden() {
       contribuyenteRef.current = setTimeout(async () => {
         try {
           const data = await contribuyenteService.consultar(id);
-          setContribuyente(data.contribuyente);
+          console.log('Respuesta contribuyente:', data);
+          console.log('Contribuyente encontrado:', data?.contribuyente);
+          // null del API = no encontrado → guardamos false para distinguirlo
+          // del estado inicial (null = aún no se ha buscado)
+          setContribuyente(data.contribuyente ?? false);
         } catch {
-          setContribuyente(null);
+          setContribuyente(false);
         } finally {
           setBuscandoContribuyente(false);
         }
