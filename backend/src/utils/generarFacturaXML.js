@@ -19,6 +19,15 @@ export function generarFacturaXML({
     tipoEmision:     '1'
   });
 
+  console.log('Items recibidos en generarFacturaXML:',
+    JSON.stringify(items.map(i => ({
+      nombre:    i.nombre_producto,
+      precio:    i.precio_unitario,
+      tiene_iva: i.tiene_iva,
+      cantidad:  i.cantidad
+    })), null, 2)
+  );
+
   // ── IVA por item ─────────────────────────────────────────────────────────
   // El precio almacenado YA incluye IVA cuando tiene_iva=true.
   // Fórmula: precioSinIVA = precio / 1.15  →  ivaItem = precio - precioSinIVA
