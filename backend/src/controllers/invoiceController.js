@@ -217,7 +217,7 @@ export const listarFacturas = async (req, res) => {
 
 // ── Emitir factura directa al cerrar mesa ─────────────────────────────────────
 export const emitirFacturaDirecta = async (req, res) => {
-  const { order_id, identificacion_comprador } = req.body;
+  const { order_id, identificacion_comprador, razon_social } = req.body;
   const tenant_id = req.usuario.tenant_id;
 
   if (!order_id) {
@@ -268,10 +268,10 @@ export const emitirFacturaDirecta = async (req, res) => {
       return res.status(400).json({ status: 'error', mensaje: 'La orden no tiene items' });
     }
 
-    // Nombre del cliente: notas de la orden o consumidor final
+    // Nombre del cliente: razon_social del SRI > notas de la orden > consumidor final
     const nombre_persona = tipo_identificacion === '07'
       ? 'CONSUMIDOR FINAL'
-      : (orden.notas || 'Cliente');
+      : (razon_social || orden.notas || 'Cliente');
 
     // Crear bill_split con todos los items
     const splitResult = await client.query(

@@ -16,7 +16,8 @@ import inventoryRoutes from './routes/inventoryRoutes.js';
 import recipeRoutes from './routes/recipeRoutes.js';
 import statsRoutes from './routes/statsRoutes.js';
 import invoiceRoutes from './routes/invoiceRoutes.js';
-import importRoutes  from './routes/importRoutes.js';
+import importRoutes        from './routes/importRoutes.js';
+import contribuyenteRoutes from './routes/contribuyenteRoutes.js';
 
 dotenv.config();
 
@@ -50,7 +51,8 @@ app.use('/api/inventory', inventoryRoutes);
 app.use('/api/recipes', recipeRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/invoices', invoiceRoutes);
-app.use('/api/import',  importRoutes);
+app.use('/api/import',        importRoutes);
+app.use('/api/contribuyente', contribuyenteRoutes);
 
 // Ruta de salud - para confirmar que el servidor está vivo
 app.get('/api/health', (req, res) => {

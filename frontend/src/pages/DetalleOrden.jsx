@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { orderService, productService, tableService, invoiceService } from '../services/api';
+import { orderService, productService, tableService, invoiceService, contribuyenteService } from '../services/api';
 import Layout from '../components/Layout';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
@@ -26,8 +26,11 @@ export default function DetalleOrden() {
   const [identificacionComprador, setIdentificacionComprador] = useState('');
   const [emitiendoFactura, setEmitiendoFactura] = useState(false);
   const [facturaEmitida, setFacturaEmitida] = useState(null);
+  const [contribuyente, setContribuyente] = useState(null);
+  const [buscandoContribuyente, setBuscandoContribuyente] = useState(false);
 
   const debounceRef = useRef(null);
+  const contribuyenteRef = useRef(null);
   const enviandoRef = useRef(false);
 
   useEffect(() => {
@@ -151,8 +154,9 @@ export default function DetalleOrden() {
       setEmitiendoFactura(true);
       setError('');
       const data = await invoiceService.emitirDirecta({
-        order_id: orden.id,
+        order_id:                 orden.id,
         identificacion_comprador: identificacionComprador.trim(),
+        razon_social:             contribuyente?.razon_social || null,
       });
       setFacturaEmitida({
         numero_factura:      data.numero_factura,
@@ -169,6 +173,28 @@ export default function DetalleOrden() {
   function abrirTicket() {
     const token = localStorage.getItem('trynova_token');
     window.open(`${API_BASE}/invoices/${facturaEmitida.invoice_id}/ticket?token=${token}`, '_blank');
+  }
+
+  function handleIdentificacionChange(valor) {
+    setIdentificacionComprador(valor);
+    setContribuyente(null);
+    clearTimeout(contribuyenteRef.current);
+    const id = valor.trim();
+    if (id.length === 10 || id.length === 13) {
+      setBuscandoContribuyente(true);
+      contribuyenteRef.current = setTimeout(async () => {
+        try {
+          const data = await contribuyenteService.consultar(id);
+          setContribuyente(data.contribuyente);
+        } catch {
+          setContribuyente(null);
+        } finally {
+          setBuscandoContribuyente(false);
+        }
+      }, 500);
+    } else {
+      setBuscandoContribuyente(false);
+    }
   }
 
   const totalCarrito = Object.entries(carrito).reduce(
@@ -406,11 +432,25 @@ export default function DetalleOrden() {
                         <input
                           type="text"
                           value={identificacionComprador}
-                          onChange={e => setIdentificacionComprador(e.target.value)}
+                          onChange={e => handleIdentificacionChange(e.target.value)}
                           placeholder="Ej: 1103890487001 · dejar vacío = consumidor final"
                           className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none"
                           onKeyDown={e => e.key === 'Enter' && handleEmitirYCerrar()}
                         />
+                        {buscandoContribuyente && (
+                          <p className="text-xs text-gray-400 mt-1.5">Consultando SRI...</p>
+                        )}
+                        {!buscandoContribuyente && contribuyente && (
+                          <div className="mt-1.5 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg text-xs space-y-0.5">
+                            <p className="font-medium text-emerald-800">{contribuyente.razon_social}</p>
+                            {contribuyente.estado && (
+                              <p className="text-emerald-600">Estado: {contribuyente.estado}</p>
+                            )}
+                          </div>
+                        )}
+                        {!buscandoContribuyente && contribuyente === false && (
+                          <p className="text-xs text-amber-600 mt-1.5">Contribuyente no encontrado en el SRI</p>
+                        )}
                       </div>
 
                       {error && (
