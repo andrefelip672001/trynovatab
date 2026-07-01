@@ -33,6 +33,8 @@ export default function DetalleOrden() {
   const [buscandoCliente, setBuscandoCliente] = useState(false);
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
   const [nombreNuevoCliente, setNombreNuevoCliente] = useState('');
+  const [emailNuevoCliente, setEmailNuevoCliente] = useState('');
+  const [telefonoNuevoCliente, setTelefonoNuevoCliente] = useState('');
   const [mostrarGuardarCliente, setMostrarGuardarCliente] = useState(false);
 
   const debounceRef = useRef(null);
@@ -256,9 +258,13 @@ export default function DetalleOrden() {
       const resp = await clienteService.crear({
         nombre:     nombreNuevoCliente.trim(),
         cedula_ruc: identificacionComprador.trim(),
+        email:      emailNuevoCliente.trim() || null,
+        telefono:   telefonoNuevoCliente.trim() || null,
       });
       handleSeleccionarCliente(resp.cliente);
       setNombreNuevoCliente('');
+      setEmailNuevoCliente('');
+      setTelefonoNuevoCliente('');
     } catch { /* continuar sin guardar */ }
   }
 
@@ -570,6 +576,20 @@ export default function DetalleOrden() {
                               placeholder="Nombre del cliente"
                               className="w-full border border-blue-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:border-blue-500"
                             />
+                            <input
+                              type="email"
+                              value={emailNuevoCliente}
+                              onChange={e => setEmailNuevoCliente(e.target.value)}
+                              placeholder="Email (opcional)"
+                              className="w-full border border-blue-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:border-blue-500"
+                            />
+                            <input
+                              type="tel"
+                              value={telefonoNuevoCliente}
+                              onChange={e => setTelefonoNuevoCliente(e.target.value)}
+                              placeholder="Teléfono (opcional)"
+                              className="w-full border border-blue-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:border-blue-500"
+                            />
                             <button
                               type="button"
                               onClick={handleGuardarNuevoCliente}
@@ -611,6 +631,7 @@ export default function DetalleOrden() {
                             setIdentificacionComprador('');
                             setClienteSeleccionado(null); setClientesEncontrados([]);
                             setMostrarGuardarCliente(false); setNombreNuevoCliente('');
+                            setEmailNuevoCliente(''); setTelefonoNuevoCliente('');
                           }}
                           disabled={emitiendoFactura}
                           className="w-full text-gray-400 hover:text-gray-600 text-sm py-1.5 transition"
