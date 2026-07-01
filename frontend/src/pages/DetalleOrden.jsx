@@ -203,6 +203,8 @@ export default function DetalleOrden() {
         } catch { setClientesEncontrados([]); }
         finally  { setBuscandoCliente(false); }
       }, 300);
+    } else {
+      setBuscandoCliente(false);
     }
 
     // Consultar SRI (500ms, solo 10 o 13 dígitos)
@@ -224,7 +226,9 @@ export default function DetalleOrden() {
             setMostrarGuardarCliente(true);
           }
         } catch {
+          // SRI inaccesible (CORS u otro error): permitir guardar manualmente
           setContribuyente(false);
+          setMostrarGuardarCliente(true);
         } finally {
           setBuscandoContribuyente(false);
         }
