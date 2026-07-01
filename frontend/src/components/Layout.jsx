@@ -288,7 +288,7 @@ export default function Layout({ children, titulo = '' }) {
         </header>
 
         {/* Contenido scrollable */}
-        <main style={{ flex: 1, overflowY: 'auto' }} className="px-4 py-5 md:px-7">
+        <main style={{ flex: 1, overflowY: 'auto' }} className="px-4 py-5 md:px-7 overflow-x-hidden">
           {children}
         </main>
       </div>

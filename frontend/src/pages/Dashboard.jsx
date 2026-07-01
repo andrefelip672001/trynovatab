@@ -136,7 +136,7 @@ export default function Dashboard() {
                         <span className="text-sm text-gray-800">{p.nombre}</span>
                       </div>
                       <span className="text-sm font-medium text-gray-500">
-                        {p.total_vendido} uds
+                        {p.cantidad} uds
                       </span>
                     </div>
                   ))}

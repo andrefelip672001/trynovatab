@@ -359,7 +359,7 @@ export default function Administracion() {
           Cargando...
         </div>
       ) : (
-        <div className="max-w-3xl mx-auto space-y-5">
+        <div className="max-w-3xl mx-auto space-y-5 overflow-x-hidden">
 
           {error && (
             <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
@@ -394,7 +394,7 @@ export default function Administracion() {
             <div className="space-y-5">
               <form
                 onSubmit={handleCrearMesa}
-                className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex gap-3 items-end"
+                className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex flex-col sm:flex-row gap-3 sm:items-end"
               >
                 <div className="flex-1">
                   <label className="block text-xs text-gray-500 font-medium mb-1.5 uppercase tracking-wide">
@@ -409,7 +409,7 @@ export default function Administracion() {
                     className={`w-full ${inputCls}`}
                   />
                 </div>
-                <div className="w-28">
+                <div className="sm:w-28">
                   <label className="block text-xs text-gray-500 font-medium mb-1.5 uppercase tracking-wide">
                     Capacidad
                   </label>
@@ -425,7 +425,7 @@ export default function Administracion() {
                 <button
                   type="submit"
                   disabled={guardandoMesa}
-                  className={btnPrimary}
+                  className={`${btnPrimary} sm:w-auto w-full`}
                   style={{ background: '#4f9cf9' }}
                 >
                   {guardandoMesa ? 'Creando...' : 'Crear mesa'}
@@ -514,7 +514,7 @@ export default function Administracion() {
               {/* Nueva categoría */}
               <form
                 onSubmit={handleCrearCategoria}
-                className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex gap-3 items-end"
+                className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex flex-col sm:flex-row gap-3 sm:items-end"
               >
                 <div className="flex-1">
                   <label className="block text-xs text-gray-500 font-medium mb-1.5 uppercase tracking-wide">
@@ -562,7 +562,7 @@ export default function Administracion() {
                     placeholder="Descripción (opcional)"
                     className={`w-full ${inputCls}`}
                   />
-                  <div className="flex gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <input
                       type="number"
                       step="0.01"
@@ -571,12 +571,12 @@ export default function Administracion() {
                       onChange={e => setPrecioProducto(e.target.value)}
                       required
                       placeholder="Precio (IVA incluido si aplica)"
-                      className={`flex-1 ${inputCls}`}
+                      className={`w-full ${inputCls}`}
                     />
                     <select
                       value={categoriaProducto}
                       onChange={e => setCategoriaProducto(e.target.value)}
-                      className={`flex-1 ${inputCls}`}
+                      className={`w-full ${inputCls}`}
                     >
                       <option value="">Sin categoría</option>
                       {categorias.map(cat => (
@@ -640,7 +640,7 @@ export default function Administracion() {
                     placeholder="Descripción (opcional)"
                     className={`w-full ${inputCls}`}
                   />
-                  <div className="flex gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <input
                       type="number"
                       step="0.01"
@@ -649,12 +649,12 @@ export default function Administracion() {
                       onChange={e => setEditPrecio(e.target.value)}
                       required
                       placeholder="Precio (IVA incluido si aplica)"
-                      className={`flex-1 ${inputCls}`}
+                      className={`w-full ${inputCls}`}
                     />
                     <select
                       value={editCategoria}
                       onChange={e => setEditCategoria(e.target.value)}
-                      className={`flex-1 ${inputCls}`}
+                      className={`w-full ${inputCls}`}
                     >
                       <option value="">Sin categoría</option>
                       {categorias.map(cat => (
@@ -762,14 +762,14 @@ export default function Administracion() {
                 <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-2">
                   Nuevo insumo
                 </p>
-                <div className="flex gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <input
                     type="text"
                     value={nombreInsumo}
                     onChange={e => setNombreInsumo(e.target.value)}
                     required
                     placeholder="Ej: Ron"
-                    className={`flex-1 ${inputCls}`}
+                    className={`w-full ${inputCls}`}
                   />
                   <input
                     type="text"
@@ -777,10 +777,10 @@ export default function Administracion() {
                     onChange={e => setUnidadInsumo(e.target.value)}
                     required
                     placeholder="Unidad (oz, kg, lt...)"
-                    className={`w-40 ${inputCls}`}
+                    className={`w-full ${inputCls}`}
                   />
                 </div>
-                <div className="flex gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <input
                     type="number"
                     step="0.01"
@@ -788,7 +788,7 @@ export default function Administracion() {
                     value={stockInsumo}
                     onChange={e => setStockInsumo(e.target.value)}
                     placeholder="Stock inicial"
-                    className={`flex-1 ${inputCls}`}
+                    className={`w-full ${inputCls}`}
                   />
                   <input
                     type="number"
@@ -797,7 +797,7 @@ export default function Administracion() {
                     value={stockMinimoInsumo}
                     onChange={e => setStockMinimoInsumo(e.target.value)}
                     placeholder="Stock mínimo"
-                    className={`flex-1 ${inputCls}`}
+                    className={`w-full ${inputCls}`}
                   />
                   <input
                     type="number"
@@ -806,7 +806,7 @@ export default function Administracion() {
                     value={costoInsumo}
                     onChange={e => setCostoInsumo(e.target.value)}
                     placeholder="Costo unitario"
-                    className={`flex-1 ${inputCls}`}
+                    className={`w-full ${inputCls}`}
                   />
                 </div>
                 <button
@@ -906,24 +906,24 @@ export default function Administracion() {
                 <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-2">
                   Nuevo producto directo
                 </p>
-                <div className="flex gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <input
                     type="text"
                     value={nombreDirecto}
                     onChange={e => setNombreDirecto(e.target.value)}
                     required
                     placeholder="Nombre (ej: Cerveza Club)"
-                    className={`flex-1 ${inputCls}`}
+                    className={`w-full ${inputCls}`}
                   />
                   <input
                     type="text"
                     value={codigoBarrasDirecto}
                     onChange={e => setCodigoBarrasDirecto(e.target.value)}
                     placeholder="Código de barras"
-                    className={`w-44 ${inputCls}`}
+                    className={`w-full ${inputCls}`}
                   />
                 </div>
-                <div className="flex gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <input
                     type="number"
                     step="0.01"
@@ -932,12 +932,12 @@ export default function Administracion() {
                     onChange={e => setPrecioDirecto(e.target.value)}
                     required
                     placeholder="Precio de venta"
-                    className={`flex-1 ${inputCls}`}
+                    className={`w-full ${inputCls}`}
                   />
                   <select
                     value={categoriaDirecto}
                     onChange={e => setCategoriaDirecto(e.target.value)}
-                    className={`flex-1 ${inputCls}`}
+                    className={`w-full ${inputCls}`}
                   >
                     <option value="">Sin categoría</option>
                     {categorias.map(cat => (
@@ -945,7 +945,7 @@ export default function Administracion() {
                     ))}
                   </select>
                 </div>
-                <div className="flex gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <input
                     type="number"
                     step="1"
@@ -953,7 +953,7 @@ export default function Administracion() {
                     value={stockDirecto}
                     onChange={e => setStockDirecto(e.target.value)}
                     placeholder="Stock inicial"
-                    className={`flex-1 ${inputCls}`}
+                    className={`w-full ${inputCls}`}
                   />
                   <input
                     type="number"
@@ -962,7 +962,7 @@ export default function Administracion() {
                     value={stockMinimoDirecto}
                     onChange={e => setStockMinimoDirecto(e.target.value)}
                     placeholder="Stock mínimo"
-                    className={`flex-1 ${inputCls}`}
+                    className={`w-full ${inputCls}`}
                   />
                 </div>
                 <div className="flex rounded-lg overflow-hidden border border-gray-200 text-sm">
@@ -1112,12 +1112,12 @@ export default function Administracion() {
                   </div>
                 )}
 
-                <div className="flex gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <select
                     value={insumoReceta}
                     onChange={e => setInsumoReceta(e.target.value)}
                     required
-                    className={`flex-1 ${inputCls}`}
+                    className={`w-full ${inputCls}`}
                   >
                     <option value="">Selecciona un insumo</option>
                     {insumos.map(i => (
@@ -1132,7 +1132,7 @@ export default function Administracion() {
                     onChange={e => setCantidadReceta(e.target.value)}
                     required
                     placeholder="Cantidad"
-                    className={`w-32 ${inputCls}`}
+                    className={`w-full ${inputCls}`}
                   />
                 </div>
                 <button
