@@ -163,6 +163,16 @@ export const importService = {
   }
 };
 
+export const superadminService = {
+  stats:         ()    => apiRequest('/superadmin/stats'),
+  listarTenants: ()    => apiRequest('/superadmin/tenants'),
+  crearTenant:   (datos) => apiRequest('/superadmin/tenants', {
+    method: 'POST',
+    body: JSON.stringify(datos),
+  }),
+  toggleTenant:  (id)  => apiRequest(`/superadmin/tenants/${id}/toggle`, { method: 'PUT' }),
+};
+
 export const invoiceService = {
   listar: () => apiRequest('/invoices'),
   emitirDirecta: (datos) => apiRequest('/invoices/emitir-directa', {

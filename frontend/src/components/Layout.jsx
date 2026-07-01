@@ -63,6 +63,15 @@ function IconAdmin() {
   );
 }
 
+function IconSuperadmin() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+    </svg>
+  );
+}
+
 const NAV_ITEMS = [
   { path: '/dashboard',      label: 'Dashboard',      Icon: IconDashboard },
   { path: '/mesas',          label: 'Mesas',          Icon: IconMesas     },
@@ -126,6 +135,31 @@ export default function Layout({ children, titulo = '' }) {
 
       {/* Navegación */}
       <nav style={{ flex: 1, padding: '10px 10px 0', overflowY: 'auto' }}>
+        {/* Item exclusivo para superadmin */}
+        {usuario?.rol === 'superadmin' && (() => {
+          const active = location.pathname === '/superadmin';
+          return (
+            <button
+              onClick={() => navegar('/superadmin')}
+              className={!active ? 'hover:bg-white/5' : ''}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '9px',
+                width: '100%', padding: '12px 12px',
+                borderRadius: '8px', border: 'none',
+                background: active ? 'rgba(250,204,21,0.18)' : 'transparent',
+                color: active ? '#eab308' : '#eab308cc',
+                fontSize: '14px', fontWeight: active ? 700 : 500,
+                cursor: 'pointer', textAlign: 'left',
+                marginBottom: '6px',
+                transition: 'background 0.15s, color 0.15s',
+              }}
+            >
+              <IconSuperadmin />
+              Panel Superadmin
+            </button>
+          );
+        })()}
+
         {NAV_ITEMS.map(({ path, label, Icon }) => {
           const active = isActive(path);
           return (

@@ -17,6 +17,7 @@ import recipeRoutes from './routes/recipeRoutes.js';
 import statsRoutes from './routes/statsRoutes.js';
 import invoiceRoutes from './routes/invoiceRoutes.js';
 import importRoutes        from './routes/importRoutes.js';
+import superadminRoutes   from './routes/superadminRoutes.js';
 
 dotenv.config();
 
@@ -51,6 +52,7 @@ app.use('/api/recipes', recipeRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/import',        importRoutes);
+app.use('/api/superadmin',    superadminRoutes);
 
 
 // Ruta de salud - para confirmar que el servidor está vivo

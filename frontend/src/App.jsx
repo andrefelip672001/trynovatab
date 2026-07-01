@@ -8,6 +8,7 @@ import SplitBill from './pages/SplitBill';
 import Administracion from './pages/Administracion';
 import Facturas from './pages/Facturas';
 import CierreCaja from './pages/CierreCaja';
+import Superadmin from './pages/Superadmin';
 
 // Protege rutas que requieren estar logueado
 function RutaProtegida({ children }) {
@@ -86,6 +87,14 @@ function AppRoutes() {
         element={
           <RutaProtegida>
             <CierreCaja />
+          </RutaProtegida>
+        }
+      />
+      <Route
+        path="/superadmin"
+        element={
+          <RutaProtegida>
+            <Superadmin />
           </RutaProtegida>
         }
       />
