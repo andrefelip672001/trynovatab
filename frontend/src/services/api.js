@@ -163,6 +163,14 @@ export const importService = {
   }
 };
 
+export const clienteService = {
+  listar:     ()          => apiRequest('/clientes'),
+  buscar:     (q)         => apiRequest(`/clientes/buscar?q=${encodeURIComponent(q)}`),
+  crear:      (datos)     => apiRequest('/clientes', { method: 'POST', body: JSON.stringify(datos) }),
+  actualizar: (id, datos) => apiRequest(`/clientes/${id}`, { method: 'PUT', body: JSON.stringify(datos) }),
+  eliminar:   (id)        => apiRequest(`/clientes/${id}`, { method: 'DELETE' }),
+};
+
 export const superadminService = {
   stats:         ()    => apiRequest('/superadmin/stats'),
   listarTenants: ()    => apiRequest('/superadmin/tenants'),

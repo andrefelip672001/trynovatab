@@ -1,7 +1,7 @@
 // v2 - consulta contribuyente SRI
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { orderService, productService, tableService, invoiceService } from '../services/api';
+import { orderService, productService, tableService, invoiceService, clienteService } from '../services/api';
 import Layout from '../components/Layout';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
@@ -29,9 +29,15 @@ export default function DetalleOrden() {
   const [facturaEmitida, setFacturaEmitida] = useState(null);
   const [contribuyente, setContribuyente] = useState(null);
   const [buscandoContribuyente, setBuscandoContribuyente] = useState(false);
+  const [clientesEncontrados, setClientesEncontrados] = useState([]);
+  const [buscandoCliente, setBuscandoCliente] = useState(false);
+  const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
+  const [nombreNuevoCliente, setNombreNuevoCliente] = useState('');
+  const [mostrarGuardarCliente, setMostrarGuardarCliente] = useState(false);
 
   const debounceRef = useRef(null);
   const contribuyenteRef = useRef(null);
+  const buscarClienteRef = useRef(null);
   const enviandoRef = useRef(false);
 
   useEffect(() => {
@@ -157,7 +163,7 @@ export default function DetalleOrden() {
       const data = await invoiceService.emitirDirecta({
         order_id:                 orden.id,
         identificacion_comprador: identificacionComprador.trim(),
-        razon_social:             contribuyente?.razon_social || null,
+        razon_social:             clienteSeleccionado?.nombre || contribuyente?.razon_social || null,
       });
       setFacturaEmitida({
         numero_factura:      data.numero_factura,
@@ -179,8 +185,27 @@ export default function DetalleOrden() {
   function handleIdentificacionChange(valor) {
     setIdentificacionComprador(valor);
     setContribuyente(null);
+    setClienteSeleccionado(null);
+    setClientesEncontrados([]);
+    setMostrarGuardarCliente(false);
     clearTimeout(contribuyenteRef.current);
+    clearTimeout(buscarClienteRef.current);
+
     const id = valor.trim();
+
+    // Buscar en clientes locales (300ms, 2+ caracteres)
+    if (id.length >= 2) {
+      setBuscandoCliente(true);
+      buscarClienteRef.current = setTimeout(async () => {
+        try {
+          const resp = await clienteService.buscar(id);
+          setClientesEncontrados(resp.clientes || []);
+        } catch { setClientesEncontrados([]); }
+        finally  { setBuscandoCliente(false); }
+      }, 300);
+    }
+
+    // Consultar SRI (500ms, solo 10 o 13 dígitos)
     if (id.length === 10 || id.length === 13) {
       setBuscandoContribuyente(true);
       contribuyenteRef.current = setTimeout(async () => {
@@ -193,8 +218,10 @@ export default function DetalleOrden() {
               razon_social: data.razonSocial || data.nombreComercial,
               estado:       data.estadoContribuyenteRuc || 'ACTIVO',
             });
+            setMostrarGuardarCliente(false);
           } else {
             setContribuyente(false);
+            setMostrarGuardarCliente(true);
           }
         } catch {
           setContribuyente(false);
@@ -205,6 +232,30 @@ export default function DetalleOrden() {
     } else {
       setBuscandoContribuyente(false);
     }
+  }
+
+  function handleSeleccionarCliente(cliente) {
+    setIdentificacionComprador(cliente.cedula_ruc);
+    setClienteSeleccionado(cliente);
+    setClientesEncontrados([]);
+    setContribuyente({ razon_social: cliente.nombre, estado: null });
+    setBuscandoCliente(false);
+    setBuscandoContribuyente(false);
+    setMostrarGuardarCliente(false);
+    clearTimeout(contribuyenteRef.current);
+    clearTimeout(buscarClienteRef.current);
+  }
+
+  async function handleGuardarNuevoCliente() {
+    if (!nombreNuevoCliente.trim()) return;
+    try {
+      const resp = await clienteService.crear({
+        nombre:     nombreNuevoCliente.trim(),
+        cedula_ruc: identificacionComprador.trim(),
+      });
+      handleSeleccionarCliente(resp.cliente);
+      setNombreNuevoCliente('');
+    } catch { /* continuar sin guardar */ }
   }
 
   const totalCarrito = Object.entries(carrito).reduce(
@@ -437,7 +488,7 @@ export default function DetalleOrden() {
                       <h3 className="text-base font-semibold text-gray-900 mb-1">Cerrar cuenta</h3>
                       <p className="text-sm text-gray-400 mb-5">¿Deseas emitir una factura antes de cerrar?</p>
 
-                      <div className="mb-5">
+                      <div className="mb-5 relative">
                         <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
                           Cédula o RUC del cliente (opcional)
                         </label>
@@ -445,23 +496,85 @@ export default function DetalleOrden() {
                           type="text"
                           value={identificacionComprador}
                           onChange={e => handleIdentificacionChange(e.target.value)}
-                          placeholder="Ej: 1103890487001 · dejar vacío = consumidor final"
+                          placeholder="Buscar cliente o escribir cédula/RUC..."
                           className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none"
-                          onKeyDown={e => e.key === 'Enter' && handleEmitirYCerrar()}
+                          onKeyDown={e => e.key === 'Enter' && !clientesEncontrados.length && handleEmitirYCerrar()}
+                          autoComplete="off"
                         />
-                        {buscandoContribuyente && (
-                          <p className="text-xs text-gray-400 mt-1.5">Consultando SRI...</p>
-                        )}
-                        {!buscandoContribuyente && contribuyente && (
-                          <div className="mt-1.5 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg text-xs space-y-0.5">
-                            <p className="font-medium text-emerald-800">{contribuyente.razon_social}</p>
-                            {contribuyente.estado && (
-                              <p className="text-emerald-600">Estado: {contribuyente.estado}</p>
-                            )}
+
+                        {/* Dropdown de clientes de la BD */}
+                        {clientesEncontrados.length > 0 && !clienteSeleccionado && (
+                          <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 overflow-hidden">
+                            {clientesEncontrados.map(c => (
+                              <button
+                                key={c.id}
+                                type="button"
+                                onClick={() => handleSeleccionarCliente(c)}
+                                className="w-full text-left px-4 py-2.5 hover:bg-gray-50 border-b border-gray-50 last:border-0 transition"
+                              >
+                                <p className="text-sm font-medium text-gray-900">{c.nombre}</p>
+                                <p className="text-xs text-gray-400">{c.cedula_ruc}{c.email && ` · ${c.email}`}</p>
+                              </button>
+                            ))}
                           </div>
                         )}
-                        {!buscandoContribuyente && contribuyente === false && (
-                          <p className="text-xs text-amber-600 mt-1.5">Contribuyente no encontrado en el SRI</p>
+
+                        {/* Estados de búsqueda */}
+                        {(buscandoCliente || buscandoContribuyente) && !clienteSeleccionado && (
+                          <p className="text-xs text-gray-400 mt-1.5">
+                            {buscandoCliente ? 'Buscando clientes...' : 'Consultando SRI...'}
+                          </p>
+                        )}
+
+                        {/* Cliente seleccionado */}
+                        {clienteSeleccionado && (
+                          <div className="mt-1.5 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg text-xs flex justify-between items-start gap-2">
+                            <div>
+                              <p className="font-medium text-emerald-800">{clienteSeleccionado.nombre}</p>
+                              <p className="text-emerald-600">Cliente registrado</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setClienteSeleccionado(null);
+                                setContribuyente(null);
+                                setIdentificacionComprador('');
+                                setClientesEncontrados([]);
+                                setMostrarGuardarCliente(false);
+                              }}
+                              className="text-gray-400 hover:text-gray-600 shrink-0"
+                            >✕</button>
+                          </div>
+                        )}
+
+                        {/* Contribuyente del SRI (sin cliente seleccionado) */}
+                        {!clienteSeleccionado && !buscandoContribuyente && contribuyente && contribuyente !== false && (
+                          <div className="mt-1.5 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg text-xs">
+                            <p className="font-medium text-emerald-800">{contribuyente.razon_social}</p>
+                            {contribuyente.estado && <p className="text-emerald-600">Estado: {contribuyente.estado}</p>}
+                          </div>
+                        )}
+
+                        {/* Guardar como nuevo cliente */}
+                        {mostrarGuardarCliente && !clienteSeleccionado && (
+                          <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg space-y-2">
+                            <p className="text-xs text-blue-700 font-medium">¿Guardar como nuevo cliente?</p>
+                            <input
+                              type="text"
+                              value={nombreNuevoCliente}
+                              onChange={e => setNombreNuevoCliente(e.target.value)}
+                              placeholder="Nombre del cliente"
+                              className="w-full border border-blue-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:border-blue-500"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleGuardarNuevoCliente}
+                              disabled={!nombreNuevoCliente.trim()}
+                              className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 font-medium transition-colors"
+                            >
+                              Guardar cliente
+                            </button>
+                          </div>
                         )}
                       </div>
 
@@ -489,7 +602,12 @@ export default function DetalleOrden() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => { setModalCerrar(false); setError(''); setIdentificacionComprador(''); }}
+                          onClick={() => {
+                            setModalCerrar(false); setError('');
+                            setIdentificacionComprador('');
+                            setClienteSeleccionado(null); setClientesEncontrados([]);
+                            setMostrarGuardarCliente(false); setNombreNuevoCliente('');
+                          }}
                           disabled={emitiendoFactura}
                           className="w-full text-gray-400 hover:text-gray-600 text-sm py-1.5 transition"
                         >
