@@ -147,7 +147,8 @@ export const recipeService = {
 };
 
 export const statsService = {
-  dashboard: () => apiRequest('/stats/dashboard')
+  dashboard:   () => apiRequest('/stats/dashboard'),
+  cierreCaja:  (fecha) => apiRequest(`/stats/cierre-caja${fecha ? '?fecha=' + fecha : ''}`),
 };
 
 export const importService = {

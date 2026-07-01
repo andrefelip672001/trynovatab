@@ -7,6 +7,7 @@ import DetalleOrden from './pages/DetalleOrden';
 import SplitBill from './pages/SplitBill';
 import Administracion from './pages/Administracion';
 import Facturas from './pages/Facturas';
+import CierreCaja from './pages/CierreCaja';
 
 // Protege rutas que requieren estar logueado
 function RutaProtegida({ children }) {
@@ -77,6 +78,14 @@ function AppRoutes() {
         element={
           <RutaProtegida>
             <Facturas />
+          </RutaProtegida>
+        }
+      />
+      <Route
+        path="/cierre-caja"
+        element={
+          <RutaProtegida>
+            <CierreCaja />
           </RutaProtegida>
         }
       />
