@@ -223,7 +223,7 @@ export default function DetalleOrden() {
 
   return (
     <Layout titulo={mesa?.nombre || 'Mesa'}>
-      <div className="max-w-2xl mx-auto space-y-5">
+      <div className={`max-w-2xl mx-auto space-y-5${cantidadCarrito > 0 ? ' pb-24 md:pb-0' : ''}`}>
         <button onClick={() => navigate('/mesas')} className="text-sm text-gray-400 hover:text-gray-600 transition">
           ← Volver a Mesas
         </button>
@@ -310,10 +310,10 @@ export default function DetalleOrden() {
                   onChange={handleBusquedaChange}
                   onKeyDown={handleEnter}
                   placeholder="Buscar producto o escanear código..."
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-3 text-base focus:outline-none"
                   autoComplete="off"
                 />
-                {buscando && <span className="absolute right-3 top-2.5 text-xs text-gray-400">Buscando...</span>}
+                {buscando && <span className="absolute right-3 top-3.5 text-xs text-gray-400">Buscando...</span>}
               </div>
 
               {resultados.length > 0 && (
@@ -351,31 +351,33 @@ export default function DetalleOrden() {
                           <p className="text-xs text-gray-400">${(info.precio || 0).toFixed(2)} c/u</p>
                         </div>
                         <div className="flex items-center gap-2 ml-3">
-                          <button type="button" onClick={() => ajustarCarrito(id, -1)} className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100">−</button>
-                          <span className="w-5 text-center text-sm">{cant}</span>
-                          <button type="button" onClick={() => ajustarCarrito(id, 1)} className="w-7 h-7 flex items-center justify-center rounded-lg text-white" style={{ background: '#4f9cf9' }}>+</button>
+                          <button type="button" onClick={() => ajustarCarrito(id, -1)} className="w-11 h-11 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100 text-lg">−</button>
+                          <span className="w-7 text-center text-sm font-medium">{cant}</span>
+                          <button type="button" onClick={() => ajustarCarrito(id, 1)} className="w-11 h-11 flex items-center justify-center rounded-lg text-white text-lg" style={{ background: '#4f9cf9' }}>+</button>
                         </div>
                       </div>
                     );
                   })}
-                  <button
-                    type="button"
-                    onClick={handleEnviarPedido}
-                    disabled={enviando}
-                    className="w-full mt-2 text-white font-medium rounded-lg px-4 py-2.5 text-sm disabled:opacity-50"
-                    style={{ background: '#4f9cf9' }}
-                  >
-                    {enviando ? 'Enviando...' : `Enviar pedido (${cantidadCarrito} ${cantidadCarrito === 1 ? 'producto' : 'productos'})`}
-                  </button>
+                  <div className="fixed bottom-0 left-0 right-0 md:static p-3 md:p-0 bg-white md:bg-transparent border-t border-gray-200 md:border-0 z-30 md:mt-2">
+                    <button
+                      type="button"
+                      onClick={handleEnviarPedido}
+                      disabled={enviando}
+                      className="w-full text-white font-medium rounded-lg px-4 py-3.5 md:py-2.5 text-sm disabled:opacity-50"
+                      style={{ background: '#4f9cf9' }}
+                    >
+                      {enviando ? 'Enviando...' : `Enviar pedido (${cantidadCarrito} ${cantidadCarrito === 1 ? 'producto' : 'productos'})`}
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
 
             <div className="flex gap-3">
-              <button type="button" onClick={() => navigate(`/orden/${orden.id}/dividir`)} className="flex-1 border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-medium rounded-lg px-4 py-2.5 text-sm transition">
+              <button type="button" onClick={() => navigate(`/orden/${orden.id}/dividir`)} className="flex-1 border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-medium rounded-lg px-4 py-3.5 md:py-2.5 text-base md:text-sm transition">
                 Dividir cuenta
               </button>
-              <button type="button" onClick={() => setModalCerrar(true)} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg px-4 py-2.5 text-sm transition">
+              <button type="button" onClick={() => setModalCerrar(true)} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg px-4 py-3.5 md:py-2.5 text-base md:text-sm transition">
                 Cerrar cuenta
               </button>
             </div>

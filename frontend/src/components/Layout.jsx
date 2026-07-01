@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -76,6 +77,17 @@ export default function Layout({ children, titulo = '' }) {
   const location = useLocation();
   const navigate  = useNavigate();
   const { usuario, logout } = useAuth();
+  const [sidebarAbierto, setSidebarAbierto] = useState(false);
+
+  // Cerrar sidebar al cambiar de ruta
+  useEffect(() => {
+    setSidebarAbierto(false);
+  }, [location.pathname]);
+
+  function navegar(path) {
+    navigate(path);
+    setSidebarAbierto(false);
+  }
 
   function isActive(path) {
     if (path === '/mesas') {
@@ -92,122 +104,191 @@ export default function Layout({ children, titulo = '' }) {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   });
 
+  const sidebarContent = (
+    <>
+      {/* Logo */}
+      <div style={{
+        padding: '22px 20px 18px',
+        borderBottom: '1px solid rgba(255,255,255,0.07)',
+      }}>
+        <h1 style={{
+          fontSize: '16px', fontWeight: 700,
+          color: '#fff', margin: 0,
+          fontFamily: "'Syne', sans-serif",
+          letterSpacing: '-0.3px',
+        }}>
+          Trynova <span style={{ color: '#4f9cf9' }}>Tab</span>
+        </h1>
+        <p style={{ fontSize: '11px', color: '#8899aa', marginTop: '2px' }}>
+          Gestión de local
+        </p>
+      </div>
+
+      {/* Navegación */}
+      <nav style={{ flex: 1, padding: '10px 10px 0', overflowY: 'auto' }}>
+        {NAV_ITEMS.map(({ path, label, Icon }) => {
+          const active = isActive(path);
+          return (
+            <button
+              key={path}
+              onClick={() => navegar(path)}
+              className={!active ? 'hover:bg-white/5' : ''}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '9px',
+                width: '100%', padding: '12px 12px',
+                borderRadius: '8px', border: 'none',
+                background: active ? 'rgba(79,156,249,0.14)' : 'transparent',
+                color: active ? '#4f9cf9' : '#8899aa',
+                fontSize: '14px', fontWeight: active ? 600 : 400,
+                cursor: 'pointer', textAlign: 'left',
+                marginBottom: '2px',
+                transition: 'background 0.15s, color 0.15s',
+              }}
+            >
+              <Icon />
+              {label}
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* Perfil usuario */}
+      <div style={{
+        padding: '14px 20px',
+        borderTop: '1px solid rgba(255,255,255,0.07)',
+      }}>
+        <p style={{
+          fontSize: '12.5px', fontWeight: 500,
+          color: '#d4dde8', margin: 0,
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}>
+          {usuario?.nombre}
+        </p>
+        <p style={{
+          fontSize: '11px', color: '#8899aa',
+          marginTop: '2px', textTransform: 'capitalize',
+        }}>
+          {usuario?.rol}
+        </p>
+        <button
+          onClick={logout}
+          className="hover:text-red-400"
+          style={{
+            marginTop: '8px', fontSize: '11.5px',
+            color: '#8899aa', background: 'none',
+            border: 'none', cursor: 'pointer', padding: 0,
+            transition: 'color 0.15s',
+          }}
+        >
+          Cerrar sesión
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <div style={{ display: 'flex', height: '100vh', fontFamily: "'Inter', sans-serif" }}>
 
-      {/* ── Sidebar ── */}
-      <aside style={{
+      {/* ── Sidebar desktop (≥768px) ── */}
+      <aside className="hidden md:flex" style={{
         width: '220px', minWidth: '220px',
         background: '#1e2a3a',
-        display: 'flex', flexDirection: 'column',
+        flexDirection: 'column',
         overflow: 'hidden',
       }}>
+        {sidebarContent}
+      </aside>
 
-        {/* Logo */}
-        <div style={{
-          padding: '22px 20px 18px',
-          borderBottom: '1px solid rgba(255,255,255,0.07)',
-        }}>
-          <h1 style={{
-            fontSize: '16px', fontWeight: 700,
-            color: '#fff', margin: 0,
-            fontFamily: "'Syne', sans-serif",
-            letterSpacing: '-0.3px',
-          }}>
-            Trynova <span style={{ color: '#4f9cf9' }}>Tab</span>
-          </h1>
-          <p style={{ fontSize: '11px', color: '#8899aa', marginTop: '2px' }}>
-            Gestión de local
-          </p>
-        </div>
-
-        {/* Navegación */}
-        <nav style={{ flex: 1, padding: '10px 10px 0', overflowY: 'auto' }}>
-          {NAV_ITEMS.map(({ path, label, Icon }) => {
-            const active = isActive(path);
-            return (
-              <button
-                key={path}
-                onClick={() => navigate(path)}
-                className={!active ? 'hover:bg-white/5' : ''}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '9px',
-                  width: '100%', padding: '9px 12px',
-                  borderRadius: '8px', border: 'none',
-                  background: active ? 'rgba(79,156,249,0.14)' : 'transparent',
-                  color: active ? '#4f9cf9' : '#8899aa',
-                  fontSize: '13.5px', fontWeight: active ? 600 : 400,
-                  cursor: 'pointer', textAlign: 'left',
-                  marginBottom: '2px',
-                  transition: 'background 0.15s, color 0.15s',
-                }}
-              >
-                <Icon />
-                {label}
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* Perfil usuario */}
-        <div style={{
-          padding: '14px 20px',
-          borderTop: '1px solid rgba(255,255,255,0.07)',
-        }}>
-          <p style={{
-            fontSize: '12.5px', fontWeight: 500,
-            color: '#d4dde8', margin: 0,
-            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-          }}>
-            {usuario?.nombre}
-          </p>
-          <p style={{
-            fontSize: '11px', color: '#8899aa',
-            marginTop: '2px', textTransform: 'capitalize',
-          }}>
-            {usuario?.rol}
-          </p>
-          <button
-            onClick={logout}
-            className="hover:text-red-400"
-            style={{
-              marginTop: '8px', fontSize: '11.5px',
-              color: '#8899aa', background: 'none',
-              border: 'none', cursor: 'pointer', padding: 0,
-              transition: 'color 0.15s',
-            }}
-          >
-            Cerrar sesión
-          </button>
-        </div>
+      {/* ── Sidebar móvil: overlay ── */}
+      {sidebarAbierto && (
+        <div
+          className="md:hidden"
+          style={{
+            position: 'fixed', inset: 0, zIndex: 40,
+            background: 'rgba(0,0,0,0.45)',
+          }}
+          onClick={() => setSidebarAbierto(false)}
+        />
+      )}
+      <aside
+        className="md:hidden"
+        style={{
+          position: 'fixed', top: 0, left: 0, bottom: 0,
+          width: '240px',
+          background: '#1e2a3a',
+          display: 'flex', flexDirection: 'column',
+          overflow: 'hidden',
+          zIndex: 50,
+          transform: sidebarAbierto ? 'translateX(0)' : 'translateX(-100%)',
+          transition: 'transform 0.25s ease',
+        }}
+      >
+        {/* Botón cerrar (X) en móvil */}
+        <button
+          onClick={() => setSidebarAbierto(false)}
+          style={{
+            position: 'absolute', top: '12px', right: '12px',
+            background: 'none', border: 'none',
+            color: '#8899aa', cursor: 'pointer',
+            fontSize: '20px', lineHeight: 1,
+            padding: '4px',
+          }}
+          aria-label="Cerrar menú"
+        >
+          ✕
+        </button>
+        {sidebarContent}
       </aside>
 
       {/* ── Área de contenido ── */}
       <div style={{
         flex: 1, display: 'flex', flexDirection: 'column',
         overflow: 'hidden', background: '#f5f6fa',
+        minWidth: 0,
       }}>
 
         {/* Header superior */}
         <header style={{
           background: '#ffffff',
           borderBottom: '1px solid #e5e7eb',
-          padding: '13px 28px',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '13px 16px 13px 16px',
+          display: 'flex', alignItems: 'center', gap: '12px',
           flexShrink: 0,
         }}>
-          <div>
-            <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#111827', margin: 0 }}>
+          {/* Botón hamburguesa (móvil) */}
+          <button
+            className="md:hidden"
+            onClick={() => setSidebarAbierto(true)}
+            style={{
+              background: 'none', border: 'none',
+              cursor: 'pointer', padding: '6px',
+              color: '#374151', fontSize: '20px', lineHeight: 1,
+              flexShrink: 0,
+            }}
+            aria-label="Abrir menú"
+          >
+            ☰
+          </button>
+
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h2 style={{
+              fontSize: '16px', fontWeight: 700, color: '#111827', margin: 0,
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            }}>
               {titulo}
             </h2>
-            <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '1px', textTransform: 'capitalize' }}>
+            <p style={{
+              fontSize: '12px', color: '#6b7280', marginTop: '1px',
+              textTransform: 'capitalize',
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            }}>
               {hoy}
             </p>
           </div>
         </header>
 
         {/* Contenido scrollable */}
-        <main style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
+        <main style={{ flex: 1, overflowY: 'auto' }} className="px-4 py-5 md:px-7">
           {children}
         </main>
       </div>
