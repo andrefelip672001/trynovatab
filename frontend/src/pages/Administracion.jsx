@@ -658,6 +658,33 @@ export default function Administracion() {
                 </button>
               </div>
 
+              {/* Nueva categoría */}
+              <form
+                onSubmit={handleCrearCategoria}
+                className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex flex-col sm:flex-row gap-3 sm:items-end"
+              >
+                <div className="flex-1">
+                  <label className="block text-xs text-gray-500 font-medium mb-1.5 uppercase tracking-wide">
+                    Nueva categoría
+                  </label>
+                  <input
+                    type="text"
+                    value={nombreCategoria}
+                    onChange={e => setNombreCategoria(e.target.value)}
+                    required
+                    placeholder="Ej: Postres"
+                    className={`w-full ${inputCls}`}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={guardandoCategoria}
+                  className={`${btnSecondary} sm:w-auto w-full`}
+                >
+                  {guardandoCategoria ? 'Creando...' : 'Crear categoría'}
+                </button>
+              </form>
+
               {/* Nuevo insumo */}
               <form
                 onSubmit={handleCrearInsumo}
